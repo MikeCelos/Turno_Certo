@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Turno Certo · Calculadora de turnos</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230d6656'/%3E%3Cpath d='M8 16l5 5 11-12' fill='none' stroke='white' stroke-width='3'/%3E%3C/svg%3E">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#096653">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Turno Certo">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="/styles.css"><script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a href="/" class="brand"><span class="mark" aria-hidden="true">✓</span>Turno<span>Certo</span></a>
+    <div class="topbar-right">
+      <button type="button" id="btn-install" class="install-btn" hidden><span class="install-icon" aria-hidden="true">📲</span> Instalar App</button>
+      <span class="version">Calculadora <span>·</span> v0.1</span>
+    </div>
+  </header>
+  <main>
+    <div class="page-heading"><div><p class="eyebrow">OS TEUS TURNOS, PARCELA A PARCELA</p><h1>Quanto vale este turno?</h1><p>Introduz o horário e vê o valor adicional esperado no recibo.</p></div><span class="timezone">Hora de Lisboa</span></div>
+    <div class="workspace">
+      <section class="card input-card" aria-labelledby="form-title">
+        <div class="section-title"><h2 id="form-title">Dados do turno</h2><button type="button" id="example" class="text-button">Usar exemplo</button></div>
+        <form id="shift-form">
+          <label for="workType">Tipo de trabalho</label><input id="workType" name="workType" value="Anestesia" required maxlength="100">
+          <fieldset class="regime"><legend>Regime</legend><div class="segmented"><label><input type="radio" name="regime" value="normal"><span>Normal</span></label><label><input type="radio" name="regime" value="extra" checked><span>Extraordinário</span></label></div></fieldset>
+          <label for="start">Entrada</label><input type="datetime-local" id="start" name="start" required step="60" value="2026-08-03T19:30">
+          <label for="end">Saída</label><input type="datetime-local" id="end" name="end" required step="60" value="2026-08-03T21:30">
+          <div class="rate-row"><div><label for="rate">Valor-hora base · R</label><div class="money-input"><input type="text" inputmode="decimal" id="rate" name="rate" required value="20,00"><span>€/h</span></div></div><p>Usa o R aplicável a este tipo de trabalho.</p></div>
+          <details class="settings"><summary>Feriados <span id="holiday-count">0 configurados</span></summary><p class="help">Adiciona os feriados aplicáveis ao turno, incluindo os municipais. Não são preenchidos automaticamente.</p><div class="holiday-controls"><input type="date" id="holiday-date" aria-label="Data do feriado"><button type="button" id="add-holiday" class="secondary">Adicionar</button></div><ul id="holiday-list"></ul><p id="holiday-error" class="field-error" role="status"></p></details>
+          <details class="settings"><summary>Mudança da hora</summary><p class="help">Se uma hora se repetir no regresso à hora de inverno, indica qual das duas ocorrências usaste.</p><label for="startOccurrence">Entrada</label><select id="startOccurrence" name="startOccurrence"><option value="">Automático</option><option value="first">Primeira ocorrência</option><option value="second">Segunda ocorrência</option></select><label for="endOccurrence">Saída</label><select id="endOccurrence" name="endOccurrence"><option value="">Automático</option><option value="first">Primeira ocorrência</option><option value="second">Segunda ocorrência</option></select></details>
+          <p id="form-error" class="error" role="alert" hidden></p><button class="primary" type="submit" id="calculate">Calcular turno</button>
+          <p class="form-note">Todo o intervalo é remunerado. Os dados não são guardados.</p>
+        </form>
+      </section>
+      <section class="result-column" aria-label="Resultado do cálculo" aria-live="polite">
+        <div id="result-state" class="result-state">Exemplo preenchido · R fictício de 20 €/h</div>
+        <div id="results" hidden>
+          <section class="total-card"><div class="total-top"><span>ADICIONAL ESPERADO</span><span id="regime-badge" class="badge"></span></div><div id="total" class="total"></div><p id="total-description"></p><div class="total-meta"><div><span>Duração</span><strong id="duration"></strong></div><div><span>Valor-hora base</span><strong id="base-rate"></strong></div><div><span>Parcelas</span><strong id="segment-count"></strong></div></div></section>
+          <section class="card breakdown"><div class="section-title"><h2>Como chegámos a este valor</h2><span class="small-label">Valores brutos</span></div><div id="timeline" class="timeline" aria-label="Distribuição temporal do turno"></div><div class="table-scroll"><table><thead><tr><th>Intervalo / categoria</th><th>Duração</th><th>Cálculo a pagar</th><th>Valor</th></tr></thead><tbody id="segments"></tbody></table></div><p class="rounding">O total é arredondado após somar os valores exatos. Pode diferir da soma das parcelas apresentadas por alguns cêntimos.</p></section>
+          <section class="card payment"><div><p class="eyebrow">PREVISÃO DE PAGAMENTO</p><h2 id="payment-month"></h2><p id="payment-detail"></p></div><span class="payment-icon" aria-hidden="true">M+2</span></section>
+          <details class="rules"><summary>Regras usadas neste cálculo</summary><p>Perfil inicial do Turno Certo. A primeira hora extra não reinicia quando muda a categoria ou o dia. No regime normal, desconta-se o 1 R já incluído na remuneração base.</p><p>Os feriados são apenas os que adicionares. Duração real nas mudanças da hora, arredondamento e distribuição entre meses são opções provisórias a validar com o processamento do hospital.</p><div class="table-scroll"><table><thead><tr><th>Categoria</th><th>Normal</th><th>Extra · 1.ª h</th><th>Extra · seguintes</th></tr></thead><tbody><tr><td>Útil diurno</td><td>1 R</td><td>1,25 R</td><td>1,50 R</td></tr><tr><td>Útil noturno</td><td>1,50 R</td><td>1,75 R</td><td>2 R</td></tr><tr><td>Especial diurno</td><td>1,50 R</td><td>1,75 R</td><td>2 R</td></tr><tr><td>Especial noturno</td><td>2 R</td><td>2,25 R</td><td>2,50 R</td></tr></tbody></table></div></details>
+        </div>
+        <div id="empty" class="empty card"><span aria-hidden="true">◷</span><h2>O teu turno, explicado.</h2><p>Preenche os dados e calcula para ver cada parcela.</p></div>
+      </section>
+    </div>
+    <footer>Turno Certo <span>Estimativa segundo o perfil configurado · Não inclui descontos nem remuneração base mensal.</span></footer>
+  </main>
+
+  <dialog id="install-dialog" class="install-dialog">
+    <div class="install-card">
+      <div class="install-header">
+        <h3>Instalar Turno Certo</h3>
+        <button type="button" id="close-install" class="close-btn" aria-label="Fechar">✕</button>
+      </div>
+      <div id="ios-guide" class="install-guide" hidden>
+        <p>Para instalar no teu <strong>iPhone ou iPad</strong>:</p>
+        <ol>
+          <li>No Safari, toca no botão <strong>Partilhar</strong> ( <span class="action-icon">📤</span> ).</li>
+          <li>Desliza para baixo e seleciona <strong>"Adicionar ao Ecrã Principal"</strong> ( <span class="action-icon">⊞</span> ).</li>
+          <li>Toca em <strong>"Adicionar"</strong> no canto superior.</li>
+        </ol>
+        <p class="install-subtext">A aplicação ficará no teu ecrã inicial e abrirá em ecrã inteiro sem barras de navegador.</p>
+      </div>
+      <div id="generic-guide" class="install-guide" hidden>
+        <p>Instala a aplicação no teu <strong>PC ou Android</strong> para acesso rápido e direto do teu ambiente de trabalho ou ecrã principal.</p>
+        <button type="button" id="confirm-install-btn" class="primary">Instalar agora</button>
+      </div>
+    </div>
+  </dialog>
+</body>
+</html>
