@@ -87,4 +87,35 @@ class ShiftCalculatorControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error", containsString("A saída deve ser posterior à entrada.")));
     }
+
+    @Test
+    @DisplayName("Calcula turno misto 24h via POST /api/calculate")
+    void testCalculateShiftMixedRegime() throws Exception {
+        String jsonPayload = """
+                {
+                    "workType": "Urgência",
+                    "regime": "misto",
+                    "start": "2026-08-03T08:00",
+                    "extraStart": "2026-08-03T20:00",
+                    "end": "2026-08-04T08:00",
+                    "startOccurrence": "",
+                    "endOccurrence": "",
+                    "extraStartOccurrence": "",
+                    "rate": "20,00",
+                    "holidays": []
+                }
+                """;
+
+        mockMvc.perform(post("/api/calculate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonPayload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payableCents", is(47500)))
+                .andExpect(jsonPath("$.regime", is("misto")))
+                .andExpect(jsonPath("$.totalMinutes", is(1440)))
+                .andExpect(jsonPath("$.segments", hasSize(3)))
+                .andExpect(jsonPath("$.segments[0].payableCents", is(0)))
+                .andExpect(jsonPath("$.segments[1].payableCents", is(3500)))
+                .andExpect(jsonPath("$.segments[2].payableCents", is(44000)));
+    }
 }

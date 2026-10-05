@@ -33,3 +33,9 @@
 .help-box ul{margin:8px 0 0;padding-left:18px}
 .help-box li{margin-bottom:6px}
 .help-box li:last-child{margin-bottom:0}
+
+/* Regime Misto */
+.mixed-config{background:#f3f7f9;border:1px solid #d4e0e5;border-radius:12px;padding:16px;margin:16px 0}
+.mixed-title{display:flex;align-items:center;gap:6px;font-size:13px;color:#173b35;margin-bottom:8px}
+.mixed-help{font-size:12px;color:var(--muted);line-height:1.4;margin:6px 0 12px}
+.optional-label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin:12px 0 6px}

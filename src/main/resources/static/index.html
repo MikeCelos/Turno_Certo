@@ -17,7 +17,7 @@
     <a href="/" class="brand"><span class="mark" aria-hidden="true">✓</span>Turno<span>Certo</span></a>
     <div class="topbar-right">
       <button type="button" id="btn-install" class="install-btn" hidden><span class="install-icon" aria-hidden="true">📲</span> Instalar App</button>
-      <span class="version">Calculadora <span>·</span> v0.1</span>
+      <span class="version">Calculadora <span>·</span> v0.2</span>
     </div>
   </header>
   <main>
@@ -27,17 +27,28 @@
         <div class="section-title"><h2 id="form-title">Dados do turno</h2><button type="button" id="example" class="text-button">Usar exemplo</button></div>
         <form id="shift-form">
           <label for="workType">Tipo de trabalho</label><input id="workType" name="workType" value="Anestesia" required maxlength="100">
-          <fieldset class="regime"><legend>Regime</legend><div class="segmented"><label><input type="radio" name="regime" value="normal"><span>Normal</span></label><label><input type="radio" name="regime" value="extra" checked><span>Extraordinário</span></label></div></fieldset>
+          <fieldset class="regime"><legend>Regime</legend><div class="segmented"><label><input type="radio" name="regime" value="normal"><span>Normal</span></label><label><input type="radio" name="regime" value="misto"><span>Misto</span></label><label><input type="radio" name="regime" value="extra" checked><span>Extraordinário</span></label></div></fieldset>
           <div class="preset-box">
             <span class="preset-title">Atalhos de turno:</span>
             <div class="preset-buttons">
               <button type="button" class="preset-pill" data-hours="night">🌙 Noite 12h (20h-08h)</button>
               <button type="button" class="preset-pill" data-hours="day">☀️ Dia 12h (08h-20h)</button>
-              <button type="button" class="preset-pill" data-hours="full">🏥 24 Horas (08h-08h)</button>
+              <button type="button" class="preset-pill" data-hours="24h-mixed">🏥 24h Misto (12h N + 12h E)</button>
+              <button type="button" class="preset-pill" data-hours="full">🏥 24h Extra (todo extra)</button>
             </div>
           </div>
           <label for="start">Entrada</label><input type="datetime-local" id="start" name="start" required step="60" value="2026-08-03T19:30">
           <label for="end">Saída</label><input type="datetime-local" id="end" name="end" required step="60" value="2026-08-03T21:30">
+          <div id="mixed-config" class="mixed-config" hidden>
+            <div class="mixed-title">
+              <strong>⚖️ Configuração do Turno Misto</strong>
+            </div>
+            <label for="extraStart">Início das horas extra</label>
+            <input type="datetime-local" id="extraStart" name="extraStart" step="60">
+            <p class="mixed-help">Até a esta hora o turno é normal (apenas suplementos); a partir daqui é extraordinário (1.ª hora a 1,75 R e seguintes a 2 R).</p>
+            <label for="normalRate" class="optional-label">Valor-hora normal · R (opcional, se diferente)</label>
+            <div class="money-input"><input type="text" inputmode="decimal" id="normalRate" name="normalRate" placeholder="Igual ao R extra"><span>€/h</span></div>
+          </div>
           <div class="rate-row">
             <div>
               <div class="label-with-help">

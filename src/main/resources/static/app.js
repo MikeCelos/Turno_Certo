@@ -35,8 +35,12 @@ $('add-holiday').onclick = () => {
 };
 function render(result) {
   $('total').textContent = money(result.payableCents);
-  $('regime-badge').textContent = result.regime === 'extra' ? 'Extraordinário' : 'Normal';
-  $('total-description').textContent = result.regime === 'extra' ? 'O trabalho extra é pago pelo coeficiente completo.' : 'Apenas o suplemento. O valor de 1 R já está incluído na base.';
+  $('regime-badge').textContent = result.regime === 'extra' ? 'Extraordinário' : (result.regime === 'misto' ? 'Misto' : 'Normal');
+  $('total-description').textContent = result.regime === 'extra'
+    ? 'O trabalho extra é pago pelo coeficiente completo.'
+    : (result.regime === 'misto'
+      ? 'Turno misto: período normal (apenas suplementos) e período extraordinário (coeficiente completo).'
+      : 'Apenas o suplemento. O valor de 1 R já está incluído na base.');
   $('duration').textContent = duration(result.totalMinutes);
   $('base-rate').textContent = `${money(result.segments[0].rateCents)}/h`;
   $('segment-count').textContent = result.segments.length;
@@ -51,8 +55,13 @@ function render(result) {
     const endDateStr = date(new Date(new Date(s.end).getTime() - 1000));
     const dateLabel = startDateStr === endDateStr ? startDateStr : `${startDateStr} – ${endDateStr}`;
 
+    const categoryLabel = category[s.category] || s.category;
+    const regimeDetail = result.regime === 'misto' ? (s.regime === 'normal' ? 'Normal' : 'Extra') : '';
+    const secondLine = [dateLabel, categoryLabel, regimeDetail].filter(Boolean).join(' · ');
+    const thirdLine = s.firstExtra ? 'Primeira hora extra' : (s.regime === 'normal' && s.payableCoefficient === 0 ? 'Incluído na remuneração base' : '');
+
     const values = [
-      [`${time(s.start)} – ${time(s.end)}`, `${dateLabel} · ${category[s.category]}`, s.firstExtra ? 'Primeira hora extra' : ''],
+      [`${time(s.start)} – ${time(s.end)}`, secondLine, thirdLine],
       [duration(s.minutes)],
       [`${number(s.minutes / 60)} h × ${number(s.payableCoefficient / 100)} × ${money(s.rateCents)}`, `Coeficiente total: ${number(s.coefficient / 100)} R`],
       [money(s.payableCents)],
@@ -90,13 +99,25 @@ async function calculate(isExample = false) {
 }
 form.onsubmit = event => { event.preventDefault(); calculate(); };
 $('example').onclick = () => {
-  form.reset(); holidays.clear(); drawHolidays(); $('holiday-error').textContent = ''; revision++; calculate(true);
+  form.reset(); holidays.clear(); drawHolidays(); $('holiday-error').textContent = ''; updateMixedVisibility(); revision++; calculate(true);
 };
 
 // LocalStorage: recuperar preferências guardadas
 const RATE_KEY = 'tc_rate';
 const WORK_TYPE_KEY = 'tc_work_type';
 const REGIME_KEY = 'tc_regime';
+
+function updateMixedVisibility() {
+  const isMixed = form.elements['regime'] && form.elements['regime'].value === 'misto';
+  const mixedBox = $('mixed-config');
+  if (mixedBox) {
+    mixedBox.hidden = !isMixed;
+    if (isMixed && !$('extraStart').value) {
+      const anchor = getAnchorDate();
+      $('extraStart').value = `${anchor}T20:00`;
+    }
+  }
+}
 
 let hasSaved = false;
 try {
@@ -110,6 +131,7 @@ try {
     if (radio) { radio.checked = true; hasSaved = true; }
   }
 } catch (_) {}
+updateMixedVisibility();
 
 $('rate').addEventListener('input', () => {
   try { localStorage.setItem(RATE_KEY, $('rate').value); } catch (_) {}
@@ -119,6 +141,7 @@ $('workType').addEventListener('input', () => {
 });
 form.querySelectorAll('input[name="regime"]').forEach(radio => {
   radio.addEventListener('change', () => {
+    updateMixedVisibility();
     try { localStorage.setItem(REGIME_KEY, radio.value); } catch (_) {}
   });
 });
@@ -151,12 +174,26 @@ document.querySelectorAll('.preset-pill').forEach(btn => {
     if (type === 'night') {
       $('start').value = `${anchor}T20:00`;
       $('end').value = `${next}T08:00`;
+      const extraRadio = form.querySelector('input[name="regime"][value="extra"]');
+      if (extraRadio) extraRadio.checked = true;
+      updateMixedVisibility();
     } else if (type === 'day') {
       $('start').value = `${anchor}T08:00`;
       $('end').value = `${anchor}T20:00`;
+      updateMixedVisibility();
+    } else if (type === '24h-mixed') {
+      $('start').value = `${anchor}T08:00`;
+      $('extraStart').value = `${anchor}T20:00`;
+      $('end').value = `${next}T08:00`;
+      const mistoRadio = form.querySelector('input[name="regime"][value="misto"]');
+      if (mistoRadio) mistoRadio.checked = true;
+      updateMixedVisibility();
     } else if (type === 'full') {
       $('start').value = `${anchor}T08:00`;
       $('end').value = `${next}T08:00`;
+      const extraRadio = form.querySelector('input[name="regime"][value="extra"]');
+      if (extraRadio) extraRadio.checked = true;
+      updateMixedVisibility();
     }
     dirty();
     calculate();

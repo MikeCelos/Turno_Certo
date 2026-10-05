@@ -13,6 +13,7 @@ public class Segment {
     private String paymentMonth;
     /** Numerador exato em unidades de 1/6000 de cêntimo. */
     private long numerator;
+    private String regime;
     private long payableCents;
 
     public Segment() {}
@@ -20,6 +21,13 @@ public class Segment {
     public Segment(String start, String end, String localDate, int minutes, String category,
                    boolean firstExtra, int coefficient, int payableCoefficient, long rateCents,
                    String paymentMonth, long numerator, long payableCents) {
+        this(start, end, localDate, minutes, category, firstExtra, coefficient, payableCoefficient,
+                rateCents, paymentMonth, numerator, payableCents, "extra");
+    }
+
+    public Segment(String start, String end, String localDate, int minutes, String category,
+                   boolean firstExtra, int coefficient, int payableCoefficient, long rateCents,
+                   String paymentMonth, long numerator, long payableCents, String regime) {
         this.start = start;
         this.end = end;
         this.localDate = localDate;
@@ -32,6 +40,7 @@ public class Segment {
         this.paymentMonth = paymentMonth;
         this.numerator = numerator;
         this.payableCents = payableCents;
+        this.regime = regime;
     }
 
     public String getStart() { return start; }
@@ -69,4 +78,7 @@ public class Segment {
 
     public long getPayableCents() { return payableCents; }
     public void setPayableCents(long payableCents) { this.payableCents = payableCents; }
+
+    public String getRegime() { return regime; }
+    public void setRegime(String regime) { this.regime = regime; }
 }

@@ -116,11 +116,14 @@ public class ShiftEngine {
         if (shift == null) {
             throw new IllegalArgumentException("Turno não pode ser nulo.");
         }
-        if (!"normal".equals(shift.getRegime()) && !"extra".equals(shift.getRegime())) {
+        if (!"normal".equals(shift.getRegime()) && !"extra".equals(shift.getRegime()) && !"misto".equals(shift.getRegime())) {
             throw new IllegalArgumentException("Regime inválido.");
         }
         if (shift.getRateCents() <= 0) {
             throw new IllegalArgumentException("R deve ser um número inteiro positivo de cêntimos.");
+        }
+        if (shift.getNormalRateCents() != null && shift.getNormalRateCents() <= 0) {
+            throw new IllegalArgumentException("R normal deve ser um número inteiro positivo de cêntimos.");
         }
         if (shift.getWorkType() == null || shift.getWorkType().trim().isEmpty()) {
             throw new IllegalArgumentException("Indica o tipo de trabalho.");
@@ -138,12 +141,28 @@ public class ShiftEngine {
             throw new IllegalArgumentException("Um turno não pode exceder 31 dias nesta versão.");
         }
 
+        Instant extraStartInstant = null;
+        if ("misto".equals(shift.getRegime()) || shift.getExtraStart() != null) {
+            if (shift.getExtraStart() == null || shift.getExtraStart().trim().isEmpty()) {
+                throw new IllegalArgumentException("Indica a hora de início do trabalho extraordinário.");
+            }
+            extraStartInstant = parseTimestamp(shift.getExtraStart(), zoneId);
+            if (!extraStartInstant.isAfter(start) || !extraStartInstant.isBefore(end)) {
+                throw new IllegalArgumentException("A transição para extraordinário deve estar entre a entrada e a saída.");
+            }
+        }
+
+        long normalRateCents = (shift.getNormalRateCents() != null && shift.getNormalRateCents() > 0)
+                ? shift.getNormalRateCents()
+                : shift.getRateCents();
+
         Set<String> holidays = new HashSet<>(profile.getHolidays());
         List<Segment> segments = new ArrayList<>();
         String previousKey = "";
 
         long startEpochMillis = start.toEpochMilli();
         long endEpochMillis = end.toEpochMilli();
+        long extraStartEpoch = extraStartInstant != null ? extraStartInstant.toEpochMilli() : startEpochMillis;
 
         for (long t = startEpochMillis; t < endEpochMillis; t += 60000L) {
             Instant current = Instant.ofEpochMilli(t);
@@ -166,18 +185,23 @@ public class ShiftEngine {
             }
             String category = matched.category();
 
-            boolean firstExtra = "extra".equals(shift.getRegime()) &&
-                    ((t - startEpochMillis) / 60000L < profile.getFirstExtraMinutes());
+            boolean isExtra = (extraStartInstant != null)
+                    ? !current.isBefore(extraStartInstant)
+                    : "extra".equals(shift.getRegime());
+            String currentRegime = isExtra ? "extra" : "normal";
+            long currentRateCents = isExtra ? shift.getRateCents() : normalRateCents;
+
+            boolean firstExtra = isExtra && ((t - extraStartEpoch) / 60000L < profile.getFirstExtraMinutes());
 
             CategoryRates rates = profile.getCoefficients().get(category);
-            int coefficient = "normal".equals(shift.getRegime())
-                    ? rates.normal()
-                    : (firstExtra ? rates.firstExtra() : rates.nextExtra());
+            int coefficient = isExtra
+                    ? (firstExtra ? rates.firstExtra() : rates.nextExtra())
+                    : rates.normal();
 
-            int payableCoefficient = coefficient - ("normal".equals(shift.getRegime()) ? profile.getIncludedNormal() : 0);
+            int payableCoefficient = coefficient - (isExtra ? 0 : profile.getIncludedNormal());
 
             String payMonth = paymentMonth(date, profile.getPaymentDelayMonths());
-            String key = payMonth + "|" + category + "|" + firstExtra + "|" + coefficient;
+            String key = payMonth + "|" + currentRegime + "|" + category + "|" + firstExtra + "|" + coefficient + "|" + currentRateCents;
             if (!key.equals(previousKey)) {
                 Segment seg = new Segment(
                         current.toString(),
@@ -188,10 +212,11 @@ public class ShiftEngine {
                         firstExtra,
                         coefficient,
                         payableCoefficient,
-                        shift.getRateCents(),
+                        currentRateCents,
                         payMonth,
                         0L,
-                        0L
+                        0L,
+                        currentRegime
                 );
                 segments.add(seg);
                 previousKey = key;
@@ -200,7 +225,7 @@ public class ShiftEngine {
             Segment segment = segments.get(segments.size() - 1);
             segment.setMinutes(segment.getMinutes() + 1);
             segment.setEnd(Instant.ofEpochMilli(t + 60000L).toString());
-            segment.setNumerator(segment.getNumerator() + (shift.getRateCents() * (long) payableCoefficient));
+            segment.setNumerator(segment.getNumerator() + (currentRateCents * (long) payableCoefficient));
         }
 
         Map<String, Long> monthly = new LinkedHashMap<>();

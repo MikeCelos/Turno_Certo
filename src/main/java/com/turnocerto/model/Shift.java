@@ -8,15 +8,26 @@ public class Shift {
     private String workType;
     /** R por tipo de trabalho, em cêntimos; nunca usar euros em ponto flutuante. */
     private long rateCents;
+    /** Início do trabalho extraordinário para regime misto (ISO com offset). */
+    private String extraStart;
+    /** R para o regime normal em regime misto, em cêntimos (opcional, <= 0 usa rateCents). */
+    private Long normalRateCents;
 
     public Shift() {}
 
     public Shift(String start, String end, String regime, String workType, long rateCents) {
+        this(start, end, regime, workType, rateCents, null, null);
+    }
+
+    public Shift(String start, String end, String regime, String workType, long rateCents,
+                 String extraStart, Long normalRateCents) {
         this.start = start;
         this.end = end;
         this.regime = regime;
         this.workType = workType;
         this.rateCents = rateCents;
+        this.extraStart = extraStart;
+        this.normalRateCents = normalRateCents;
     }
 
     public String getStart() { return start; }
@@ -33,4 +44,10 @@ public class Shift {
 
     public long getRateCents() { return rateCents; }
     public void setRateCents(long rateCents) { this.rateCents = rateCents; }
+
+    public String getExtraStart() { return extraStart; }
+    public void setExtraStart(String extraStart) { this.extraStart = extraStart; }
+
+    public Long getNormalRateCents() { return normalRateCents; }
+    public void setNormalRateCents(Long normalRateCents) { this.normalRateCents = normalRateCents; }
 }

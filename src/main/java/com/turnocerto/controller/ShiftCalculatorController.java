@@ -29,7 +29,17 @@ public class ShiftCalculatorController {
         String end = LisbonTimeUtils.lisbonTimestamp(request.getEnd(), request.getEndOccurrence());
         long rateCents = LisbonTimeUtils.parseRateCents(request.getRate());
 
-        Shift shift = new Shift(start, end, request.getRegime(), request.getWorkType(), rateCents);
+        String extraStart = null;
+        if (request.getExtraStart() != null && !request.getExtraStart().trim().isEmpty()) {
+            extraStart = LisbonTimeUtils.lisbonTimestamp(request.getExtraStart(), request.getExtraStartOccurrence());
+        }
+
+        Long normalRateCents = null;
+        if (request.getNormalRate() != null && !request.getNormalRate().trim().isEmpty()) {
+            normalRateCents = LisbonTimeUtils.parseRateCents(request.getNormalRate());
+        }
+
+        Shift shift = new Shift(start, end, request.getRegime(), request.getWorkType(), rateCents, extraStart, normalRateCents);
         Profile profile = Profile.initialProfile(request.getHolidays());
 
         ShiftCalculationResult result = ShiftEngine.calculateShift(shift, profile);

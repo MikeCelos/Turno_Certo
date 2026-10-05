@@ -349,5 +349,111 @@ class ShiftEngineTest {
 
         assertEquals(47000, r.getPayableCents());
     }
+
+    @Test
+    @DisplayName("Turno 24h misto (12h normal + 12h extra em dia útil)")
+    void testTurno24hMisto12hNormal12hExtraDiaUtil() {
+        Shift s = new Shift(
+                "2026-08-03T08:00+01:00",
+                "2026-08-04T08:00+01:00",
+                "misto",
+                "Urgência Geral",
+                2000,
+                "2026-08-03T20:00+01:00",
+                null
+        );
+
+        ShiftCalculationResult r = calc(s);
+
+        // 24 horas = 1440 minutos
+        assertEquals(1440, r.getTotalMinutes());
+        assertEquals("misto", r.getRegime());
+
+        // Segmentos esperados:
+        // 0) 08:00 - 20:00 (12h) Normal diurno: 1R (incluído no vencimento base, suplemento = 0€)
+        // 1) 20:00 - 21:00 (1h) Extraordinário noturno: 1.ª hora extra (1,75R = 35,00€)
+        // 2) 21:00 - 08:00 (11h) Extraordinário noturno: seguintes (2,00R = 440,00€)
+        assertEquals(3, r.getSegments().size());
+
+        Segment s0 = r.getSegments().get(0);
+        assertEquals(720, s0.getMinutes());
+        assertEquals("util-diurno", s0.getCategory());
+        assertEquals("normal", s0.getRegime());
+        assertEquals(0, s0.getPayableCoefficient());
+        assertEquals(0, s0.getPayableCents());
+
+        Segment s1 = r.getSegments().get(1);
+        assertEquals(60, s1.getMinutes());
+        assertEquals("util-noturno", s1.getCategory());
+        assertEquals("extra", s1.getRegime());
+        assertTrue(s1.isFirstExtra());
+        assertEquals(175, s1.getCoefficient());
+        assertEquals(3500, s1.getPayableCents());
+
+        Segment s2 = r.getSegments().get(2);
+        assertEquals(660, s2.getMinutes());
+        assertEquals("util-noturno", s2.getCategory());
+        assertEquals("extra", s2.getRegime());
+        assertFalse(s2.isFirstExtra());
+        assertEquals(200, s2.getCoefficient());
+        assertEquals(44000, s2.getPayableCents());
+
+        // Total: 0 + 35 + 440 = 475,00 €
+        assertEquals(47500, r.getPayableCents());
+    }
+
+    @Test
+    @DisplayName("Turno misto com taxas R diferenciadas para normal e extra")
+    void testTurnoMistoComTaxasRDistintas() {
+        // Domingo: 08:00 às 20:00 normal (R=14,52€), 20:00 às 21:00 extra (R=20,00€)
+        Shift s = new Shift(
+                "2026-08-09T08:00+01:00",
+                "2026-08-09T21:00+01:00",
+                "misto",
+                "Pediatria",
+                2000,
+                "2026-08-09T20:00+01:00",
+                1452L
+        );
+
+        ShiftCalculationResult r = calc(s);
+
+        assertEquals(2, r.getSegments().size());
+
+        // Domingo diurno (especial-diurno, normal = 150, suplemento a pagar = 50 centésimos = 0,5R)
+        // 720m * 1452 cêntimos * 50 / 6000 = 8712 cêntimos (87,12€)
+        Segment s0 = r.getSegments().get(0);
+        assertEquals(720, s0.getMinutes());
+        assertEquals("normal", s0.getRegime());
+        assertEquals(1452, s0.getRateCents());
+        assertEquals(8712, s0.getPayableCents());
+
+        // 20:00 às 21:00 extra (especial-noturno 1.ª hora extra = 225, R=20,00€)
+        // 60m * 2000 cêntimos * 225 / 6000 = 4500 cêntimos (45,00€)
+        Segment s1 = r.getSegments().get(1);
+        assertEquals(60, s1.getMinutes());
+        assertEquals("extra", s1.getRegime());
+        assertEquals(2000, s1.getRateCents());
+        assertEquals(4500, s1.getPayableCents());
+
+        assertEquals(8712 + 4500, r.getPayableCents());
+    }
+
+    @Test
+    @DisplayName("Validação do regime misto rejeita transição inválida ou ausente")
+    void testValidacaoRegimeMisto() {
+        // Sem hora de transição
+        Shift s1 = new Shift("2026-08-03T08:00+01:00", "2026-08-04T08:00+01:00", "misto", "Urgência", 2000);
+        assertThrows(IllegalArgumentException.class, () -> calc(s1));
+
+        // Transição fora do intervalo (anterior à entrada)
+        Shift s2 = new Shift("2026-08-03T08:00+01:00", "2026-08-04T08:00+01:00", "misto", "Urgência", 2000, "2026-08-03T07:00+01:00", null);
+        assertThrows(IllegalArgumentException.class, () -> calc(s2));
+
+        // Transição posterior à saída
+        Shift s3 = new Shift("2026-08-03T08:00+01:00", "2026-08-04T08:00+01:00", "misto", "Urgência", 2000, "2026-08-04T09:00+01:00", null);
+        assertThrows(IllegalArgumentException.class, () -> calc(s3));
+    }
 }
+
 
