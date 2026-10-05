@@ -176,7 +176,8 @@ public class ShiftEngine {
 
             int payableCoefficient = coefficient - ("normal".equals(shift.getRegime()) ? profile.getIncludedNormal() : 0);
 
-            String key = date + "|" + category + "|" + firstExtra + "|" + coefficient;
+            String payMonth = paymentMonth(date, profile.getPaymentDelayMonths());
+            String key = payMonth + "|" + category + "|" + firstExtra + "|" + coefficient;
             if (!key.equals(previousKey)) {
                 Segment seg = new Segment(
                         current.toString(),
@@ -188,7 +189,7 @@ public class ShiftEngine {
                         coefficient,
                         payableCoefficient,
                         shift.getRateCents(),
-                        paymentMonth(date, profile.getPaymentDelayMonths()),
+                        payMonth,
                         0L,
                         0L
                 );

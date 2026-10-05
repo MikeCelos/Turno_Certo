@@ -47,8 +47,12 @@ function render(result) {
     bar.style.flexGrow = String(s.minutes); bar.title = `${category[s.category]} · ${duration(s.minutes)}`;
     $('timeline').append(bar);
     const row = document.createElement('tr');
+    const startDateStr = date(s.start);
+    const endDateStr = date(new Date(new Date(s.end).getTime() - 1000));
+    const dateLabel = startDateStr === endDateStr ? startDateStr : `${startDateStr} – ${endDateStr}`;
+
     const values = [
-      [`${time(s.start)} – ${time(s.end)}`, `${date(s.start)} · ${category[s.category]}`, s.firstExtra ? 'Primeira hora extra' : ''],
+      [`${time(s.start)} – ${time(s.end)}`, `${dateLabel} · ${category[s.category]}`, s.firstExtra ? 'Primeira hora extra' : ''],
       [duration(s.minutes)],
       [`${number(s.minutes / 60)} h × ${number(s.payableCoefficient / 100)} × ${money(s.rateCents)}`, `Coeficiente total: ${number(s.coefficient / 100)} R`],
       [money(s.payableCents)],

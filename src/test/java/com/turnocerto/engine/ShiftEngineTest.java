@@ -302,4 +302,52 @@ class ShiftEngineTest {
                 .sum();
         assertEquals(60, firstExtraMinutes);
     }
+
+    @Test
+    @DisplayName("Turno extra através da meia-noite junta parcelas contíguas com o mesmo regime e coeficiente")
+    void testTurnoExtraAtravessaMeiaNoiteJuntaParcelasComMesmoRegimeECoeficiente() {
+        // Exemplo: turno extra 20:30 segunda - 08:30 terça (2026-08-03T20:30 a 2026-08-04T08:30)
+        Shift s = new Shift(
+                "2026-08-03T20:30+01:00",
+                "2026-08-04T08:30+01:00",
+                "extra",
+                "Urgência",
+                2000
+        );
+
+        ShiftCalculationResult r = calc(s);
+
+        // 12 horas = 720 minutos
+        assertEquals(720, r.getTotalMinutes());
+
+        // Deve ter exatamente 3 parcelas (e não 4 divididas à meia-noite):
+        // 1) 20:30 - 21:30: 60m útil noturno (1,75 R - 1ª h extra)
+        // 2) 21:30 - 08:00: 630m (10h30) útil noturno (2 R)
+        // 3) 08:00 - 08:30: 30m útil diurno (1,5 R)
+        assertEquals(3, r.getSegments().size());
+
+        Segment s0 = r.getSegments().get(0);
+        assertEquals(60, s0.getMinutes());
+        assertEquals("util-noturno", s0.getCategory());
+        assertTrue(s0.isFirstExtra());
+        assertEquals(175, s0.getCoefficient());
+        assertEquals(3500, s0.getPayableCents());
+
+        Segment s1 = r.getSegments().get(1);
+        assertEquals(630, s1.getMinutes());
+        assertEquals("util-noturno", s1.getCategory());
+        assertFalse(s1.isFirstExtra());
+        assertEquals(200, s1.getCoefficient());
+        assertEquals(42000, s1.getPayableCents());
+
+        Segment s2 = r.getSegments().get(2);
+        assertEquals(30, s2.getMinutes());
+        assertEquals("util-diurno", s2.getCategory());
+        assertFalse(s2.isFirstExtra());
+        assertEquals(150, s2.getCoefficient());
+        assertEquals(1500, s2.getPayableCents());
+
+        assertEquals(47000, r.getPayableCents());
+    }
 }
+
