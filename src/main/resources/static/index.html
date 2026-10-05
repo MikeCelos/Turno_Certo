@@ -17,7 +17,7 @@
     <a href="/" class="brand"><span class="mark" aria-hidden="true">✓</span>Turno<span>Certo</span></a>
     <div class="topbar-right">
       <button type="button" id="btn-install" class="install-btn" hidden><span class="install-icon" aria-hidden="true">📲</span> Instalar App</button>
-      <span class="version">Calculadora <span>·</span> v0.2</span>
+      <span class="version">Calculadora <span>·</span> v0.3</span>
     </div>
   </header>
   <main>
@@ -68,19 +68,75 @@
           </div>
           <details class="settings"><summary>Feriados <span id="holiday-count">0 configurados</span></summary><p class="help">Adiciona os feriados aplicáveis ao turno, incluindo os municipais. Não são preenchidos automaticamente.</p><div class="holiday-controls"><input type="date" id="holiday-date" aria-label="Data do feriado"><button type="button" id="add-holiday" class="secondary">Adicionar</button></div><ul id="holiday-list"></ul><p id="holiday-error" class="field-error" role="status"></p></details>
           <details class="settings"><summary>Mudança da hora</summary><p class="help">Se uma hora se repetir no regresso à hora de inverno, indica qual das duas ocorrências usaste.</p><label for="startOccurrence">Entrada</label><select id="startOccurrence" name="startOccurrence"><option value="">Automático</option><option value="first">Primeira ocorrência</option><option value="second">Segunda ocorrência</option></select><label for="endOccurrence">Saída</label><select id="endOccurrence" name="endOccurrence"><option value="">Automático</option><option value="first">Primeira ocorrência</option><option value="second">Segunda ocorrência</option></select></details>
-          <p id="form-error" class="error" role="alert" hidden></p><button class="primary" type="submit" id="calculate">Calcular turno</button>
+          <p id="form-error" class="error" role="alert" hidden></p>
+          <div class="form-actions">
+            <button class="primary" type="submit" id="calculate">Calcular turno</button>
+            <button type="button" id="add-to-roster" class="btn-roster">➕ Adicionar à Folha do Mês</button>
+          </div>
           <p class="form-note">Todo o intervalo é remunerado. Os teus dados base ficam memorizados apenas no teu navegador.</p>
         </form>
       </section>
       <section class="result-column" aria-label="Resultado do cálculo" aria-live="polite">
-        <div id="result-state" class="result-state">Exemplo preenchido · R fictício de 20 €/h</div>
-        <div id="results" hidden>
-          <section class="total-card"><div class="total-top"><span>ADICIONAL ESPERADO</span><span id="regime-badge" class="badge"></span></div><div id="total" class="total"></div><p id="total-description"></p><div class="total-meta"><div><span>Duração</span><strong id="duration"></strong></div><div><span>Valor-hora base</span><strong id="base-rate"></strong></div><div><span>Parcelas</span><strong id="segment-count"></strong></div></div></section>
-          <section class="card breakdown"><div class="section-title"><h2>Como chegámos a este valor</h2><span class="small-label">Valores brutos</span></div><div id="timeline" class="timeline" aria-label="Distribuição temporal do turno"></div><div class="table-scroll"><table><thead><tr><th>Intervalo / categoria</th><th>Duração</th><th>Cálculo a pagar</th><th>Valor</th></tr></thead><tbody id="segments"></tbody></table></div><p class="rounding">O total é arredondado após somar os valores exatos. Pode diferir da soma das parcelas apresentadas por alguns cêntimos.</p></section>
-          <section class="card payment"><div><p class="eyebrow">PREVISÃO DE PAGAMENTO</p><h2 id="payment-month"></h2><p id="payment-detail"></p></div><span class="payment-icon" aria-hidden="true">M+2</span></section>
-          <details class="rules"><summary>Regras usadas neste cálculo</summary><p>Perfil inicial do Turno Certo. A primeira hora extra não reinicia quando muda a categoria ou o dia. No regime normal, desconta-se o 1 R já incluído na remuneração base.</p><p>Os feriados são apenas os que adicionares. Duração real nas mudanças da hora, arredondamento e distribuição entre meses são opções provisórias a validar com o processamento do hospital.</p><div class="table-scroll"><table><thead><tr><th>Categoria</th><th>Normal</th><th>Extra · 1.ª h</th><th>Extra · seguintes</th></tr></thead><tbody><tr><td>Útil diurno</td><td>1 R</td><td>1,25 R</td><td>1,50 R</td></tr><tr><td>Útil noturno</td><td>1,50 R</td><td>1,75 R</td><td>2 R</td></tr><tr><td>Especial diurno</td><td>1,50 R</td><td>1,75 R</td><td>2 R</td></tr><tr><td>Especial noturno</td><td>2 R</td><td>2,25 R</td><td>2,50 R</td></tr></tbody></table></div></details>
+        <div class="view-switch" role="tablist" aria-label="Modo de visualização">
+          <button type="button" role="tab" id="tab-single" class="view-tab active" aria-selected="true" aria-controls="single-view">🕒 Turno Individual</button>
+          <button type="button" role="tab" id="tab-roster" class="view-tab" aria-selected="false" aria-controls="roster-view">📋 Folha Mensal <span id="roster-badge" class="roster-badge" hidden>0</span></button>
         </div>
-        <div id="empty" class="empty card"><span aria-hidden="true">◷</span><h2>O teu turno, explicado.</h2><p>Preenche os dados e calcula para ver cada parcela.</p></div>
+
+        <div id="single-view">
+          <div id="result-state" class="result-state">Exemplo preenchido · R fictício de 20 €/h</div>
+          <div id="results" hidden>
+            <section class="total-card"><div class="total-top"><span>ADICIONAL ESPERADO</span><span id="regime-badge" class="badge"></span></div><div id="total" class="total"></div><p id="total-description"></p><div class="total-meta"><div><span>Duração</span><strong id="duration"></strong></div><div><span>Valor-hora base</span><strong id="base-rate"></strong></div><div><span>Parcelas</span><strong id="segment-count"></strong></div></div></section>
+            <section class="card breakdown"><div class="section-title"><h2>Como chegámos a este valor</h2><span class="small-label">Valores brutos</span></div><div id="timeline" class="timeline" aria-label="Distribuição temporal do turno"></div><div class="table-scroll"><table><thead><tr><th>Intervalo / categoria</th><th>Duração</th><th>Cálculo a pagar</th><th>Valor</th></tr></thead><tbody id="segments"></tbody></table></div><p class="rounding">O total é arredondado após somar os valores exatos. Pode diferir da soma das parcelas apresentadas por alguns cêntimos.</p></section>
+            <section class="card payment"><div><p class="eyebrow">PREVISÃO DE PAGAMENTO</p><h2 id="payment-month"></h2><p id="payment-detail"></p></div><span class="payment-icon" aria-hidden="true">M+2</span></section>
+            <details class="rules"><summary>Regras usadas neste cálculo</summary><p>Perfil inicial do Turno Certo. A primeira hora extra não reinicia quando muda a categoria ou o dia. No regime normal, desconta-se o 1 R já incluído na remuneração base.</p><p>Os feriados são apenas os que adicionares. Duração real nas mudanças da hora, arredondamento e distribuição entre meses são opções provisórias a validar com o processamento do hospital.</p><div class="table-scroll"><table><thead><tr><th>Categoria</th><th>Normal</th><th>Extra · 1.ª h</th><th>Extra · seguintes</th></tr></thead><tbody><tr><td>Útil diurno</td><td>1 R</td><td>1,25 R</td><td>1,50 R</td></tr><tr><td>Útil noturno</td><td>1,50 R</td><td>1,75 R</td><td>2 R</td></tr><tr><td>Especial diurno</td><td>1,50 R</td><td>1,75 R</td><td>2 R</td></tr><tr><td>Especial noturno</td><td>2 R</td><td>2,25 R</td><td>2,50 R</td></tr></tbody></table></div></details>
+          </div>
+          <div id="empty" class="empty card"><span aria-hidden="true">◷</span><h2>O teu turno, explicado.</h2><p>Preenche os dados e calcula para ver cada parcela.</p></div>
+        </div>
+
+        <div id="roster-view" hidden>
+          <div id="roster-state" class="result-state">Folha mensal consolidada · formato de recibo</div>
+          <div id="roster-results" hidden>
+            <section class="total-card"><div class="total-top"><span>TOTAL MENSAL CONSOLIDADO</span><span id="roster-shifts-badge" class="badge">0 turnos</span></div><div id="roster-total" class="total">0,00 €</div><p id="roster-total-description">Valor bruto acumulado a receber no recibo de vencimento.</p><div class="total-meta"><div><span>Duração total</span><strong id="roster-duration">0 h</strong></div><div><span>Previsão de pagamento</span><strong id="roster-payment-month">-</strong></div><div><span>Turnos na folha</span><strong id="roster-count-stat">0</strong></div></div></section>
+
+            <section class="card breakdown">
+              <div class="section-title">
+                <div>
+                  <h2>Extrato Consolidado do Recibo</h2>
+                  <p class="subtitle">Horas somadas e agrupadas por rubrica salarial exatamente como surgem no recibo do hospital.</p>
+                </div>
+                <span class="small-label">Valores brutos</span>
+              </div>
+              <div class="table-scroll">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Rubrica / Categoria</th>
+                      <th>Horas Totais</th>
+                      <th>Cálculo</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody id="roster-categories"></tbody>
+                </table>
+              </div>
+              <p class="rounding">A soma dos valores exatos pode diferir dos arredondamentos parcelares por alguns cêntimos.</p>
+            </section>
+
+            <section class="card roster-shifts-card">
+              <div class="section-title">
+                <h2>Turnos incluídos nesta folha (<span id="roster-list-count">0</span>)</h2>
+                <button type="button" id="clear-roster" class="text-button danger-text">Limpar folha</button>
+              </div>
+              <div id="roster-shift-list" class="roster-list"></div>
+            </section>
+          </div>
+          <div id="roster-empty" class="empty card">
+            <span aria-hidden="true">📋</span>
+            <h2>A tua folha mensal está vazia</h2>
+            <p>Configura o turno no formulário à esquerda e clica em <strong>"Adicionar à Folha do Mês"</strong> para acumulares todos os turnos e obteres o extrato consolidado do recibo.</p>
+            <button type="button" id="load-roster-example" class="secondary" style="margin-top: 16px;">⚡ Carregar exemplo com 4 turnos</button>
+          </div>
+        </div>
       </section>
     </div>
     <footer>Turno Certo <span>Estimativa segundo o perfil configurado · Não inclui descontos nem remuneração base mensal.</span></footer>

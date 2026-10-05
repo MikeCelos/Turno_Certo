@@ -97,9 +97,9 @@ async function calculate(isExample = false) {
     $('result-state').textContent = 'Revê os dados do turno';
   } finally { $('calculate').disabled = false; $('calculate').textContent = 'Calcular turno'; }
 }
-form.onsubmit = event => { event.preventDefault(); calculate(); };
+form.onsubmit = event => { event.preventDefault(); switchTab('single'); calculate(); };
 $('example').onclick = () => {
-  form.reset(); holidays.clear(); drawHolidays(); $('holiday-error').textContent = ''; updateMixedVisibility(); revision++; calculate(true);
+  form.reset(); holidays.clear(); drawHolidays(); $('holiday-error').textContent = ''; updateMixedVisibility(); revision++; switchTab('single'); calculate(true);
 };
 
 // LocalStorage: recuperar preferências guardadas
@@ -275,5 +275,359 @@ if (confirmInstallBtn) {
     }
     if (installDialog) installDialog.close();
   };
+}
+
+// --- Gestão de Tabs (Turno Individual vs Folha Mensal) ---
+const tabSingle = $('tab-single');
+const tabRoster = $('tab-roster');
+const singleView = $('single-view');
+const rosterView = $('roster-view');
+const rosterBadge = $('roster-badge');
+
+function switchTab(target) {
+  if (target === 'roster') {
+    if (tabRoster) {
+      tabRoster.classList.add('active');
+      tabRoster.setAttribute('aria-selected', 'true');
+    }
+    if (tabSingle) {
+      tabSingle.classList.remove('active');
+      tabSingle.setAttribute('aria-selected', 'false');
+    }
+    if (rosterView) rosterView.hidden = false;
+    if (singleView) singleView.hidden = true;
+  } else {
+    if (tabSingle) {
+      tabSingle.classList.add('active');
+      tabSingle.setAttribute('aria-selected', 'true');
+    }
+    if (tabRoster) {
+      tabRoster.classList.remove('active');
+      tabRoster.setAttribute('aria-selected', 'false');
+    }
+    if (singleView) singleView.hidden = false;
+    if (rosterView) rosterView.hidden = true;
+  }
+}
+
+if (tabSingle) tabSingle.onclick = () => switchTab('single');
+if (tabRoster) {
+  tabRoster.onclick = () => {
+    switchTab('roster');
+    if (rosterShifts.length > 0 && $('roster-results') && $('roster-results').hidden) {
+      calculateRoster();
+    }
+  };
+}
+
+// --- Folha Mensal (Roster) ---
+const ROSTER_KEY = 'tc_roster';
+let rosterShifts = [];
+try {
+  rosterShifts = JSON.parse(localStorage.getItem(ROSTER_KEY) || '[]');
+  if (!Array.isArray(rosterShifts)) rosterShifts = [];
+} catch (_) {
+  rosterShifts = [];
+}
+
+function saveRoster() {
+  try {
+    localStorage.setItem(ROSTER_KEY, JSON.stringify(rosterShifts));
+  } catch (_) {}
+  updateRosterBadge();
+}
+
+function updateRosterBadge() {
+  if (!rosterBadge) return;
+  const count = rosterShifts.length;
+  if (count > 0) {
+    rosterBadge.textContent = count;
+    rosterBadge.hidden = false;
+  } else {
+    rosterBadge.hidden = true;
+  }
+}
+
+const monthNamesShort = ['jan.', 'fev.', 'mar.', 'abr.', 'mai.', 'jun.', 'jul.', 'ago.', 'set.', 'out.', 'nov.', 'dez.'];
+function formatInputDate(dtLocal) {
+  if (!dtLocal || dtLocal.length < 10) return '';
+  const [y, m, d] = dtLocal.slice(0, 10).split('-');
+  return `${d} ${monthNamesShort[parseInt(m, 10) - 1] || ''}`;
+}
+
+function formatInputTimeRange(startDt, endDt) {
+  if (!startDt || !endDt) return '';
+  const startTime = startDt.slice(11, 16);
+  const endTime = endDt.slice(11, 16);
+  const startDate = formatInputDate(startDt);
+  const endDate = formatInputDate(endDt);
+  if (startDate === endDate) {
+    return `${startDate} · ${startTime} – ${endTime}`;
+  }
+  return `${startDate} ${startTime} – ${endDate} ${endTime}`;
+}
+
+async function calculateRoster() {
+  updateRosterBadge();
+  if (rosterShifts.length === 0) {
+    if ($('roster-results')) $('roster-results').hidden = true;
+    if ($('roster-empty')) $('roster-empty').hidden = false;
+    if ($('roster-state')) $('roster-state').textContent = 'A folha mensal está vazia';
+    return;
+  }
+
+  if ($('roster-state')) $('roster-state').textContent = 'A consolidar folha mensal…';
+  try {
+    const payload = {
+      shifts: rosterShifts.map(s => ({
+        workType: s.workType,
+        regime: s.regime,
+        start: s.start,
+        end: s.end,
+        rate: s.rate,
+        extraStart: s.extraStart || null,
+        normalRate: s.normalRate || null,
+        startOccurrence: s.startOccurrence || null,
+        endOccurrence: s.endOccurrence || null
+      })),
+      holidays: [...holidays]
+    };
+    const response = await fetch('/api/calculate-roster', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || 'Erro ao processar folha.');
+    renderRoster(result);
+  } catch (err) {
+    if ($('roster-state')) $('roster-state').textContent = 'Erro ao processar folha: ' + err.message;
+  }
+}
+
+function renderRoster(result) {
+  updateRosterBadge();
+  if ($('roster-results')) $('roster-results').hidden = false;
+  if ($('roster-empty')) $('roster-empty').hidden = true;
+  if ($('roster-state')) $('roster-state').textContent = `${result.totalShifts} turno${result.totalShifts === 1 ? '' : 's'} na folha · consolidado estilo recibo`;
+  if ($('roster-total')) $('roster-total').textContent = money(result.payableCents);
+  if ($('roster-shifts-badge')) $('roster-shifts-badge').textContent = `${result.totalShifts} turno${result.totalShifts === 1 ? '' : 's'}`;
+  if ($('roster-duration')) $('roster-duration').textContent = duration(result.totalMinutes);
+  if ($('roster-count-stat')) $('roster-count-stat').textContent = result.totalShifts;
+  if ($('roster-list-count')) $('roster-list-count').textContent = result.totalShifts;
+
+  const payments = (result.payments || []).filter(p => p.payableCents > 0);
+  if ($('roster-payment-month')) {
+    $('roster-payment-month').textContent = payments.length
+      ? payments.map(p => month(p.month)).join(' / ')
+      : 'Sem suplemento';
+  }
+
+  // Tabela Consolidada (CategorySummaries)
+  if ($('roster-categories')) {
+    $('roster-categories').replaceChildren();
+    for (const cs of result.categorySummaries) {
+      const row = document.createElement('tr');
+
+      const c1 = document.createElement('td');
+      const strong1 = document.createElement('strong');
+      strong1.textContent = cs.label;
+      const small1 = document.createElement('small');
+      small1.textContent = `${cs.regime === 'extra' ? 'Extraordinário' : 'Normal'} · Valor-hora: ${money(cs.rateCents)}/h`;
+      c1.append(strong1, small1);
+
+      const c2 = document.createElement('td');
+      const strong2 = document.createElement('strong');
+      strong2.textContent = duration(cs.totalMinutes);
+      c2.append(strong2);
+
+      const c3 = document.createElement('td');
+      const strong3 = document.createElement('strong');
+      strong3.textContent = `${number(cs.totalMinutes / 60)} h × ${number(cs.payableCoefficient / 100)} × ${money(cs.rateCents)}`;
+      const small3 = document.createElement('small');
+      small3.textContent = `Coeficiente: ${number(cs.coefficient / 100)} R`;
+      c3.append(strong3, small3);
+
+      const c4 = document.createElement('td');
+      const strong4 = document.createElement('strong');
+      strong4.textContent = money(cs.payableCents);
+      c4.append(strong4);
+
+      row.append(c1, c2, c3, c4);
+      $('roster-categories').append(row);
+    }
+  }
+
+  // Lista de Turnos da Folha
+  if ($('roster-shift-list')) {
+    $('roster-shift-list').replaceChildren();
+    rosterShifts.forEach((shiftItem, idx) => {
+      const shiftRes = result.shifts && result.shifts[idx];
+      const item = document.createElement('div');
+      item.className = 'roster-shift-item';
+
+      const info = document.createElement('div');
+      info.className = 'roster-shift-info';
+
+      const title = document.createElement('div');
+      title.className = 'roster-shift-title';
+      title.textContent = `${idx + 1}. ${shiftItem.workType || 'Turno'}`;
+
+      const meta = document.createElement('div');
+      meta.className = 'roster-shift-meta';
+
+      const timeSpan = document.createElement('span');
+      timeSpan.textContent = formatInputTimeRange(shiftItem.start, shiftItem.end);
+
+      const tag = document.createElement('span');
+      tag.className = 'roster-shift-tag';
+      tag.textContent = shiftItem.regime === 'extra' ? 'Extra' : (shiftItem.regime === 'misto' ? 'Misto' : 'Normal');
+
+      const durSpan = document.createElement('span');
+      durSpan.textContent = shiftRes ? `· ${duration(shiftRes.totalMinutes)}` : '';
+
+      meta.append(timeSpan, tag, durSpan);
+      info.append(title, meta);
+
+      const right = document.createElement('div');
+      right.className = 'roster-shift-right';
+
+      const val = document.createElement('div');
+      val.className = 'roster-shift-val';
+      val.textContent = shiftRes ? money(shiftRes.payableCents) : '-';
+
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'btn-remove-shift';
+      delBtn.textContent = '✕';
+      delBtn.title = 'Remover turno';
+      delBtn.setAttribute('aria-label', `Remover turno ${idx + 1}`);
+      delBtn.onclick = () => removeRosterShift(shiftItem.id);
+
+      right.append(val, delBtn);
+      item.append(info, right);
+      $('roster-shift-list').append(item);
+    });
+  }
+}
+
+function removeRosterShift(id) {
+  rosterShifts = rosterShifts.filter(s => s.id !== id);
+  saveRoster();
+  if (rosterShifts.length > 0) {
+    calculateRoster();
+  } else {
+    if ($('roster-results')) $('roster-results').hidden = true;
+    if ($('roster-empty')) $('roster-empty').hidden = false;
+    if ($('roster-state')) $('roster-state').textContent = 'A folha mensal está vazia';
+    updateRosterBadge();
+  }
+}
+
+if ($('clear-roster')) {
+  $('clear-roster').onclick = () => {
+    if (confirm('Tens a certeza de que queres limpar todos os turnos da folha mensal?')) {
+      rosterShifts = [];
+      saveRoster();
+      if ($('roster-results')) $('roster-results').hidden = true;
+      if ($('roster-empty')) $('roster-empty').hidden = false;
+      if ($('roster-state')) $('roster-state').textContent = 'Folha mensal limpa';
+    }
+  };
+}
+
+if ($('load-roster-example')) {
+  $('load-roster-example').onclick = () => {
+    const anchor = getAnchorDate();
+    const next = getNextDate(anchor);
+    const next2 = getNextDate(next);
+    const next3 = getNextDate(next2);
+    const next4 = getNextDate(next3);
+    const currentRate = $('rate').value || '20,00';
+    const currentType = $('workType').value || 'Anestesia';
+
+    rosterShifts = [
+      {
+        id: 's_ex1',
+        workType: currentType,
+        regime: 'extra',
+        start: `${anchor}T20:00`,
+        end: `${next}T08:00`,
+        rate: currentRate,
+        extraStart: null,
+        normalRate: null
+      },
+      {
+        id: 's_ex2',
+        workType: currentType,
+        regime: 'extra',
+        start: `${next2}T08:00`,
+        end: `${next2}T20:00`,
+        rate: currentRate,
+        extraStart: null,
+        normalRate: null
+      },
+      {
+        id: 's_ex3',
+        workType: currentType,
+        regime: 'misto',
+        start: `${next3}T08:00`,
+        end: `${next4}T08:00`,
+        rate: currentRate,
+        extraStart: `${next3}T20:00`,
+        normalRate: '14,52'
+      },
+      {
+        id: 's_ex4',
+        workType: currentType,
+        regime: 'extra',
+        start: `${next4}T20:00`,
+        end: `${getNextDate(next4)}T08:00`,
+        rate: currentRate,
+        extraStart: null,
+        normalRate: null
+      }
+    ];
+    saveRoster();
+    calculateRoster();
+  };
+}
+
+if ($('add-to-roster')) {
+  $('add-to-roster').onclick = () => {
+    if (!form.reportValidity()) return;
+    const isMixed = form.elements['regime'] && form.elements['regime'].value === 'misto';
+    const shiftItem = {
+      id: 's_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+      workType: $('workType').value.trim() || 'Anestesia',
+      regime: form.elements['regime'].value,
+      start: $('start').value,
+      end: $('end').value,
+      rate: $('rate').value,
+      extraStart: (isMixed && $('extraStart').value) ? $('extraStart').value : null,
+      normalRate: (isMixed && $('normalRate').value) ? $('normalRate').value : null,
+      startOccurrence: $('startOccurrence').value || null,
+      endOccurrence: $('endOccurrence').value || null
+    };
+    rosterShifts.push(shiftItem);
+    saveRoster();
+
+    const btn = $('add-to-roster');
+    const origText = btn.textContent;
+    btn.textContent = '✓ Adicionado à Folha!';
+    btn.classList.add('btn-success');
+    setTimeout(() => {
+      btn.textContent = origText;
+      btn.classList.remove('btn-success');
+    }, 1200);
+
+    switchTab('roster');
+    calculateRoster();
+  };
+}
+
+updateRosterBadge();
+if (rosterShifts.length > 0) {
+  calculateRoster();
 }
 

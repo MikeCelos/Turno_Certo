@@ -39,3 +39,35 @@
 .mixed-title{display:flex;align-items:center;gap:6px;font-size:13px;color:#173b35;margin-bottom:8px}
 .mixed-help{font-size:12px;color:var(--muted);line-height:1.4;margin:6px 0 12px}
 .optional-label{font-size:12px;color:var(--muted);font-weight:600;display:block;margin:12px 0 6px}
+
+/* Navegação por Tabs */
+.view-switch{display:flex;background:#edf2f4;padding:4px;border-radius:12px;gap:6px;margin-bottom:20px}
+.view-tab{flex:1;border:none;background:transparent;padding:11px 16px;border-radius:9px;font-size:14px;font-weight:650;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:all .15s ease}
+.view-tab:hover{color:#172c35}
+.view-tab.active{background:white;color:var(--green);box-shadow:0 1px 6px rgba(0,0,0,0.08)}
+.roster-badge{background:var(--green);color:white;font-size:11px;font-weight:700;padding:2px 7px;border-radius:12px;min-width:18px;text-align:center}
+.view-tab:not(.active) .roster-badge{background:#c8d6d2;color:#173b35}
+
+/* Ações do Formulário */
+.form-actions{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.btn-roster{width:100%;background:#eef6f3;border:1.5px solid var(--green);border-radius:9px;color:var(--green);font-weight:650;padding:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14px;transition:all .15s ease}
+.btn-roster:hover{background:#dff0ea;transform:translateY(-1px)}
+.btn-roster:active{transform:translateY(1px)}
+.btn-roster.btn-success{background:var(--green);color:white;border-color:var(--green)}
+
+/* Cartão do Recibo Consolidado e Lista de Turnos */
+.subtitle{font-size:13px;color:var(--muted);margin:4px 0 0;font-weight:400;line-height:1.4}
+.roster-shifts-card{margin-top:22px;padding:25px}
+.danger-text{color:#b03535!important}
+.danger-text:hover{text-decoration:underline}
+.roster-list{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+.roster-shift-item{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border:1px solid var(--border);border-radius:12px;background:#fbfcfd;transition:background .15s,border-color .15s}
+.roster-shift-item:hover{background:#f4f8f7;border-color:#b7dcce}
+.roster-shift-info{display:flex;flex-direction:column;gap:4px}
+.roster-shift-title{font-weight:650;font-size:14px;color:#172c35}
+.roster-shift-meta{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.roster-shift-tag{background:#edf2f4;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:600;color:#3b5966}
+.roster-shift-right{display:flex;align-items:center;gap:14px}
+.roster-shift-val{font-weight:700;font-size:15px;color:var(--green);font-variant-numeric:tabular-nums;text-align:right}
+.btn-remove-shift{border:none;background:#edf2f4;color:#8b3434;border-radius:50%;width:30px;height:30px;font-size:13px;cursor:pointer;display:grid;place-items:center;transition:all .15s}
+.btn-remove-shift:hover{background:#ffdede;color:#a12b34}

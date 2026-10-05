@@ -454,6 +454,41 @@ class ShiftEngineTest {
         Shift s3 = new Shift("2026-08-03T08:00+01:00", "2026-08-04T08:00+01:00", "misto", "Urgência", 2000, "2026-08-04T09:00+01:00", null);
         assertThrows(IllegalArgumentException.class, () -> calc(s3));
     }
+
+    @Test
+    @DisplayName("Cálculo da Folha Mensal agrega corretamente múltiplos turnos em categorias de recibo")
+    void testCalculoFolhaMensalComQuatroTurnos() {
+        // Turno 1: Noite 12h extraordinário útil (segunda 20:00 - terça 08:00)
+        Shift s1 = new Shift("2026-08-03T20:00+01:00", "2026-08-04T08:00+01:00", "extra", "Anestesia", 2000);
+        // Turno 2: Dia 12h extraordinário útil (quinta 08:00 - quinta 20:00)
+        Shift s2 = new Shift("2026-08-06T08:00+01:00", "2026-08-06T20:00+01:00", "extra", "Anestesia", 2000);
+        // Turno 3: 24h Misto (sábado 08:00 - domingo 08:00, extraStart 20:00)
+        Shift s3 = new Shift("2026-08-08T08:00+01:00", "2026-08-09T08:00+01:00", "misto", "Anestesia", 2000, "2026-08-08T20:00+01:00", 1452L);
+        // Turno 4: Noite 12h extraordinário domingo (domingo 20:00 - segunda 08:00)
+        Shift s4 = new Shift("2026-08-09T20:00+01:00", "2026-08-10T08:00+01:00", "extra", "Anestesia", 2000);
+
+        List<Shift> shifts = List.of(s1, s2, s3, s4);
+        Profile profile = Profile.initialProfile(Collections.emptyList());
+
+        RosterCalculationResult roster = ShiftEngine.calculateRoster(shifts, profile);
+
+        assertEquals(4, roster.getTotalShifts());
+        assertEquals(720 + 720 + 1440 + 720, roster.getTotalMinutes()); // 3600 minutos = 60 horas
+        assertEquals(4, roster.getShifts().size());
+
+        long expectedTotal = ShiftEngine.calculateShift(s1, profile).getPayableCents()
+                + ShiftEngine.calculateShift(s2, profile).getPayableCents()
+                + ShiftEngine.calculateShift(s3, profile).getPayableCents()
+                + ShiftEngine.calculateShift(s4, profile).getPayableCents();
+        assertEquals(expectedTotal, roster.getPayableCents());
+
+        assertFalse(roster.getCategorySummaries().isEmpty());
+        long sumSummaries = roster.getCategorySummaries().stream().mapToLong(CategorySummary::getPayableCents).sum();
+        assertTrue(Math.abs(sumSummaries - roster.getPayableCents()) <= 2);
+
+        assertThrows(IllegalArgumentException.class, () -> ShiftEngine.calculateRoster(Collections.emptyList(), profile));
+        assertThrows(IllegalArgumentException.class, () -> ShiftEngine.calculateRoster(null, profile));
+    }
 }
 
 

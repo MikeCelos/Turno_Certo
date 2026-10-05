@@ -45,4 +45,40 @@ public class ShiftCalculatorController {
         ShiftCalculationResult result = ShiftEngine.calculateShift(shift, profile);
         return ResponseEntity.ok(result);
     }
+
+    @PostMapping("/calculate-roster")
+    public ResponseEntity<com.turnocerto.model.RosterCalculationResult> calculateRoster(@RequestBody com.turnocerto.dto.CalculateRosterRequest request) {
+        if (request == null || request.getShifts() == null || request.getShifts().isEmpty()) {
+            throw new IllegalArgumentException("A lista de turnos não pode estar vazia.");
+        }
+        if (request.getShifts().size() > 200) {
+            throw new IllegalArgumentException("Máximo de 200 turnos excedido.");
+        }
+        if (request.getHolidays() != null && request.getHolidays().size() > 500) {
+            throw new IllegalArgumentException("Lista de feriados inválida.");
+        }
+
+        java.util.List<Shift> shifts = new java.util.ArrayList<>();
+        for (CalculateRequest item : request.getShifts()) {
+            String start = LisbonTimeUtils.lisbonTimestamp(item.getStart(), item.getStartOccurrence());
+            String end = LisbonTimeUtils.lisbonTimestamp(item.getEnd(), item.getEndOccurrence());
+            long rateCents = LisbonTimeUtils.parseRateCents(item.getRate());
+
+            String extraStart = null;
+            if (item.getExtraStart() != null && !item.getExtraStart().trim().isEmpty()) {
+                extraStart = LisbonTimeUtils.lisbonTimestamp(item.getExtraStart(), item.getExtraStartOccurrence());
+            }
+
+            Long normalRateCents = null;
+            if (item.getNormalRate() != null && !item.getNormalRate().trim().isEmpty()) {
+                normalRateCents = LisbonTimeUtils.parseRateCents(item.getNormalRate());
+            }
+
+            shifts.add(new Shift(start, end, item.getRegime(), item.getWorkType(), rateCents, extraStart, normalRateCents));
+        }
+
+        Profile profile = Profile.initialProfile(request.getHolidays());
+        com.turnocerto.model.RosterCalculationResult result = ShiftEngine.calculateRoster(shifts, profile);
+        return ResponseEntity.ok(result);
+    }
 }

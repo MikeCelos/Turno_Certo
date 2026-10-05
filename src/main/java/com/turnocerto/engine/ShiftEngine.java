@@ -256,4 +256,134 @@ public class ShiftEngine {
                 segments
         );
     }
+
+    private static String formatCoeff(int coeff) {
+        if (coeff % 100 == 0) {
+            return (coeff / 100) + " R";
+        }
+        return String.format(Locale.GERMAN, "%.2f R", coeff / 100.0);
+    }
+
+    private static String makeCategoryLabel(Segment seg) {
+        if ("extra".equals(seg.getRegime())) {
+            if (seg.isFirstExtra()) {
+                return "1.ª Hora Extraordinária (" + formatCoeff(seg.getCoefficient()) + ")";
+            }
+            if ("util-noturno".equals(seg.getCategory())) {
+                return "Trabalho Supl. Noturno (" + formatCoeff(seg.getCoefficient()) + ")";
+            }
+            if ("util-diurno".equals(seg.getCategory())) {
+                return "Trabalho Supl. Diurno (" + formatCoeff(seg.getCoefficient()) + ")";
+            }
+            if ("especial-noturno".equals(seg.getCategory())) {
+                return "Trabalho Supl. Fim de Semana Noturno (" + formatCoeff(seg.getCoefficient()) + ")";
+            }
+            if ("especial-diurno".equals(seg.getCategory())) {
+                return "Trabalho Supl. Fim de Semana Diurno (" + formatCoeff(seg.getCoefficient()) + ")";
+            }
+            return "Trabalho Suplementar (" + formatCoeff(seg.getCoefficient()) + ")";
+        } else {
+            if (seg.getPayableCoefficient() == 0) {
+                return "Regime Normal Diurno (incluído na remuneração base)";
+            }
+            String catName = seg.getCategory().contains("noturno") ? "Noturno" : "Fim de Semana";
+            return "Suplemento Normal " + catName + " (" + formatCoeff(seg.getPayableCoefficient()) + ")";
+        }
+    }
+
+    private static class AggregatedCategory {
+        String label;
+        String regime;
+        String category;
+        boolean firstExtra;
+        int coefficient;
+        int payableCoefficient;
+        long rateCents;
+        int minutes;
+        long numerator;
+
+        AggregatedCategory(String label, String regime, String category, boolean firstExtra,
+                           int coefficient, int payableCoefficient, long rateCents) {
+            this.label = label;
+            this.regime = regime;
+            this.category = category;
+            this.firstExtra = firstExtra;
+            this.coefficient = coefficient;
+            this.payableCoefficient = payableCoefficient;
+            this.rateCents = rateCents;
+            this.minutes = 0;
+            this.numerator = 0L;
+        }
+    }
+
+    public static RosterCalculationResult calculateRoster(List<Shift> shifts, Profile profile) {
+        validateProfile(profile);
+        if (shifts == null || shifts.isEmpty()) {
+            throw new IllegalArgumentException("A lista de turnos não pode estar vazia.");
+        }
+
+        List<ShiftCalculationResult> shiftResults = new ArrayList<>();
+        Map<String, AggregatedCategory> categoryMap = new LinkedHashMap<>();
+        Map<String, Long> monthlyNumerator = new LinkedHashMap<>();
+        int totalMinutes = 0;
+        long totalNumerator = 0L;
+
+        for (Shift s : shifts) {
+            ShiftCalculationResult res = calculateShift(s, profile);
+            shiftResults.add(res);
+            totalMinutes += res.getTotalMinutes();
+
+            for (Segment seg : res.getSegments()) {
+                String label = makeCategoryLabel(seg);
+                String aggKey = seg.getRegime() + "|" + seg.getCategory() + "|" + seg.isFirstExtra() + "|" + seg.getCoefficient() + "|" + seg.getRateCents();
+
+                AggregatedCategory agg = categoryMap.computeIfAbsent(aggKey, k -> new AggregatedCategory(
+                        label,
+                        seg.getRegime(),
+                        seg.getCategory(),
+                        seg.isFirstExtra(),
+                        seg.getCoefficient(),
+                        seg.getPayableCoefficient(),
+                        seg.getRateCents()
+                ));
+                agg.minutes += seg.getMinutes();
+                agg.numerator += seg.getNumerator();
+
+                monthlyNumerator.put(seg.getPaymentMonth(),
+                        monthlyNumerator.getOrDefault(seg.getPaymentMonth(), 0L) + seg.getNumerator());
+                totalNumerator += seg.getNumerator();
+            }
+        }
+
+        List<CategorySummary> summaries = new ArrayList<>();
+        for (AggregatedCategory agg : categoryMap.values()) {
+            summaries.add(new CategorySummary(
+                    agg.label,
+                    agg.regime,
+                    agg.category,
+                    agg.firstExtra,
+                    agg.coefficient,
+                    agg.payableCoefficient,
+                    agg.rateCents,
+                    agg.minutes,
+                    roundCents(agg.numerator)
+            ));
+        }
+
+        List<PaymentMonth> payments = new ArrayList<>();
+        for (Map.Entry<String, Long> entry : monthlyNumerator.entrySet()) {
+            payments.add(new PaymentMonth(entry.getKey(), roundCents(entry.getValue())));
+        }
+
+        long payableCents = roundCents(totalNumerator);
+
+        return new RosterCalculationResult(
+                shifts.size(),
+                totalMinutes,
+                payableCents,
+                summaries,
+                payments,
+                shiftResults
+        );
+    }
 }

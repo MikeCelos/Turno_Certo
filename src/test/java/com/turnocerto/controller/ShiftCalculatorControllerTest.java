@@ -118,4 +118,40 @@ class ShiftCalculatorControllerTest {
                 .andExpect(jsonPath("$.segments[1].payableCents", is(3500)))
                 .andExpect(jsonPath("$.segments[2].payableCents", is(44000)));
     }
+
+    @Test
+    @DisplayName("Calcula folha mensal com múltiplos turnos via POST /api/calculate-roster")
+    void testCalculateRosterEndpoint() throws Exception {
+        String jsonPayload = """
+                {
+                    "shifts": [
+                        {
+                            "workType": "Anestesia",
+                            "regime": "extra",
+                            "start": "2026-08-03T20:00",
+                            "end": "2026-08-04T08:00",
+                            "rate": "20,00"
+                        },
+                        {
+                            "workType": "Anestesia",
+                            "regime": "extra",
+                            "start": "2026-08-06T08:00",
+                            "end": "2026-08-06T20:00",
+                            "rate": "20,00"
+                        }
+                    ],
+                    "holidays": []
+                }
+                """;
+
+        mockMvc.perform(post("/api/calculate-roster")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonPayload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalShifts", is(2)))
+                .andExpect(jsonPath("$.totalMinutes", is(1440)))
+                .andExpect(jsonPath("$.payableCents", greaterThan(0)))
+                .andExpect(jsonPath("$.categorySummaries", hasSize(greaterThanOrEqualTo(2))))
+                .andExpect(jsonPath("$.shifts", hasSize(2)));
+    }
 }
