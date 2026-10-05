@@ -28,13 +28,37 @@
         <form id="shift-form">
           <label for="workType">Tipo de trabalho</label><input id="workType" name="workType" value="Anestesia" required maxlength="100">
           <fieldset class="regime"><legend>Regime</legend><div class="segmented"><label><input type="radio" name="regime" value="normal"><span>Normal</span></label><label><input type="radio" name="regime" value="extra" checked><span>Extraordinário</span></label></div></fieldset>
+          <div class="preset-box">
+            <span class="preset-title">Atalhos de turno:</span>
+            <div class="preset-buttons">
+              <button type="button" class="preset-pill" data-hours="night">🌙 Noite 12h (20h-08h)</button>
+              <button type="button" class="preset-pill" data-hours="day">☀️ Dia 12h (08h-20h)</button>
+              <button type="button" class="preset-pill" data-hours="full">🏥 24 Horas (08h-08h)</button>
+            </div>
+          </div>
           <label for="start">Entrada</label><input type="datetime-local" id="start" name="start" required step="60" value="2026-08-03T19:30">
           <label for="end">Saída</label><input type="datetime-local" id="end" name="end" required step="60" value="2026-08-03T21:30">
-          <div class="rate-row"><div><label for="rate">Valor-hora base · R</label><div class="money-input"><input type="text" inputmode="decimal" id="rate" name="rate" required value="20,00"><span>€/h</span></div></div><p>Usa o R aplicável a este tipo de trabalho.</p></div>
+          <div class="rate-row">
+            <div>
+              <div class="label-with-help">
+                <label for="rate">Valor-hora base · R</label>
+                <button type="button" id="rate-help-btn" class="help-btn" aria-label="Ajuda sobre o R" title="Qual R deves colocar?">?</button>
+              </div>
+              <div class="money-input"><input type="text" inputmode="decimal" id="rate" name="rate" required value="20,00"><span>€/h</span></div>
+            </div>
+            <p>Usa o R aplicável a este tipo de trabalho.</p>
+          </div>
+          <div id="rate-help-box" class="help-box" hidden>
+            <strong>💡 Qual valor de R deves colocar aqui?</strong>
+            <ul>
+              <li><strong>Horas Extraordinárias:</strong> Coloca o valor-hora que surge nas linhas de trabalho suplementar do teu recibo (costuma ser mais alto, ex: 16,33 €, por somar outros suplementos).</li>
+              <li><strong>Regime Normal:</strong> Coloca o valor-hora base do teu contrato (ex: 14,52 €).</li>
+            </ul>
+          </div>
           <details class="settings"><summary>Feriados <span id="holiday-count">0 configurados</span></summary><p class="help">Adiciona os feriados aplicáveis ao turno, incluindo os municipais. Não são preenchidos automaticamente.</p><div class="holiday-controls"><input type="date" id="holiday-date" aria-label="Data do feriado"><button type="button" id="add-holiday" class="secondary">Adicionar</button></div><ul id="holiday-list"></ul><p id="holiday-error" class="field-error" role="status"></p></details>
           <details class="settings"><summary>Mudança da hora</summary><p class="help">Se uma hora se repetir no regresso à hora de inverno, indica qual das duas ocorrências usaste.</p><label for="startOccurrence">Entrada</label><select id="startOccurrence" name="startOccurrence"><option value="">Automático</option><option value="first">Primeira ocorrência</option><option value="second">Segunda ocorrência</option></select><label for="endOccurrence">Saída</label><select id="endOccurrence" name="endOccurrence"><option value="">Automático</option><option value="first">Primeira ocorrência</option><option value="second">Segunda ocorrência</option></select></details>
           <p id="form-error" class="error" role="alert" hidden></p><button class="primary" type="submit" id="calculate">Calcular turno</button>
-          <p class="form-note">Todo o intervalo é remunerado. Os dados não são guardados.</p>
+          <p class="form-note">Todo o intervalo é remunerado. Os teus dados base ficam memorizados apenas no teu navegador.</p>
         </form>
       </section>
       <section class="result-column" aria-label="Resultado do cálculo" aria-live="polite">

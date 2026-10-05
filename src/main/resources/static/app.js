@@ -88,7 +88,87 @@ form.onsubmit = event => { event.preventDefault(); calculate(); };
 $('example').onclick = () => {
   form.reset(); holidays.clear(); drawHolidays(); $('holiday-error').textContent = ''; revision++; calculate(true);
 };
-calculate(true);
+
+// LocalStorage: recuperar preferências guardadas
+const RATE_KEY = 'tc_rate';
+const WORK_TYPE_KEY = 'tc_work_type';
+const REGIME_KEY = 'tc_regime';
+
+let hasSaved = false;
+try {
+  const savedRate = localStorage.getItem(RATE_KEY);
+  if (savedRate) { $('rate').value = savedRate; hasSaved = true; }
+  const savedWorkType = localStorage.getItem(WORK_TYPE_KEY);
+  if (savedWorkType) { $('workType').value = savedWorkType; hasSaved = true; }
+  const savedRegime = localStorage.getItem(REGIME_KEY);
+  if (savedRegime) {
+    const radio = form.querySelector(`input[name="regime"][value="${savedRegime}"]`);
+    if (radio) { radio.checked = true; hasSaved = true; }
+  }
+} catch (_) {}
+
+$('rate').addEventListener('input', () => {
+  try { localStorage.setItem(RATE_KEY, $('rate').value); } catch (_) {}
+});
+$('workType').addEventListener('input', () => {
+  try { localStorage.setItem(WORK_TYPE_KEY, $('workType').value); } catch (_) {}
+});
+form.querySelectorAll('input[name="regime"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    try { localStorage.setItem(REGIME_KEY, radio.value); } catch (_) {}
+  });
+});
+
+// Atalhos rápidos de turnos (Presets)
+function getAnchorDate() {
+  const startVal = $('start').value;
+  if (startVal && /^\d{4}-\d{2}-\d{2}/.test(startVal)) {
+    return startVal.slice(0, 10);
+  }
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function getNextDate(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + 1);
+  return dt.toISOString().slice(0, 10);
+}
+
+document.querySelectorAll('.preset-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const anchor = getAnchorDate();
+    const next = getNextDate(anchor);
+    const type = btn.getAttribute('data-hours');
+    if (type === 'night') {
+      $('start').value = `${anchor}T20:00`;
+      $('end').value = `${next}T08:00`;
+    } else if (type === 'day') {
+      $('start').value = `${anchor}T08:00`;
+      $('end').value = `${anchor}T20:00`;
+    } else if (type === 'full') {
+      $('start').value = `${anchor}T08:00`;
+      $('end').value = `${next}T08:00`;
+    }
+    dirty();
+    calculate();
+  });
+});
+
+// Ajuda contextual sobre o valor R
+const rateHelpBtn = $('rate-help-btn');
+const rateHelpBox = $('rate-help-box');
+if (rateHelpBtn && rateHelpBox) {
+  rateHelpBtn.addEventListener('click', () => {
+    rateHelpBox.hidden = !rateHelpBox.hidden;
+  });
+}
+
+calculate(!hasSaved);
 
 // Registo PWA Service Worker e Botão de Instalação
 if ('serviceWorker' in navigator) {
