@@ -631,3 +631,56 @@ if (rosterShifts.length > 0) {
   calculateRoster();
 }
 
+// --- Gestão de Tema (Modo Escuro / Claro) ---
+const THEME_KEY = 'tc_theme';
+const btnTheme = $('btn-theme');
+const themeIcon = $('theme-icon');
+const metaThemeColor = $('meta-theme-color');
+
+function getActiveTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'dark' || saved === 'light') return saved;
+  } catch (_) {}
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme(theme) {
+  const isDark = theme === 'dark';
+  if (isDark) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  if (themeIcon) themeIcon.textContent = isDark ? '☀️' : '🌙';
+  if (btnTheme) {
+    btnTheme.setAttribute('title', isDark ? 'Ativar modo claro' : 'Ativar modo escuro');
+    btnTheme.setAttribute('aria-label', isDark ? 'Ativar modo claro' : 'Ativar modo escuro');
+  }
+  if (metaThemeColor) metaThemeColor.content = isDark ? '#0c1418' : '#096653';
+}
+
+let activeTheme = getActiveTheme();
+applyTheme(activeTheme);
+
+if (btnTheme) {
+  btnTheme.onclick = () => {
+    activeTheme = activeTheme === 'dark' ? 'light' : 'dark';
+    try {
+      localStorage.setItem(THEME_KEY, activeTheme);
+    } catch (_) {}
+    applyTheme(activeTheme);
+  };
+}
+
+if (window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    try {
+      if (!localStorage.getItem(THEME_KEY)) {
+        activeTheme = e.matches ? 'dark' : 'light';
+        applyTheme(activeTheme);
+      }
+    } catch (_) {}
+  });
+}
+

@@ -37,7 +37,7 @@ case "$ACTION" in
         "$MVN_BIN" spring-boot:run
         ;;
     jar)
-        if [ ! -f "target/turno-certo-0.3.0-SNAPSHOT.jar" ]; then
+        if [ ! -f "target/turno-certo-0.4.0-SNAPSHOT.jar" ]; then
             "$MVN_BIN" package -DskipTests
         fi
         LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "IP_DO_PC")
@@ -47,7 +47,7 @@ case "$ACTION" in
         echo " 👉 No teu PC:                           http://localhost:8080"
         echo " 👉 No teu iPhone / Android (mesmo Wi-Fi): http://${LOCAL_IP}:8080"
         echo "=========================================================="
-        java -jar target/turno-certo-0.3.0-SNAPSHOT.jar
+        java -jar target/turno-certo-0.4.0-SNAPSHOT.jar
         ;;
     docker)
         echo "A construir imagem Docker turnocerto:latest ..."

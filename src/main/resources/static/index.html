@@ -5,19 +5,34 @@
   <title>Turno Certo · Calculadora de turnos</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230d6656'/%3E%3Cpath d='M8 16l5 5 11-12' fill='none' stroke='white' stroke-width='3'/%3E%3C/svg%3E">
   <link rel="manifest" href="/manifest.json">
-  <meta name="theme-color" content="#096653">
+  <meta name="theme-color" id="meta-theme-color" content="#096653">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Turno Certo">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="/styles.css"><script src="/app.js" defer></script>
+  <link rel="stylesheet" href="/styles.css">
+  <script>
+    (function(){
+      try {
+        var saved = localStorage.getItem('tc_theme');
+        var isDark = saved === 'dark' || (!saved && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDark) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          var m = document.getElementById('meta-theme-color');
+          if (m) m.content = '#0b1317';
+        }
+      } catch(e){}
+    })();
+  </script>
+  <script src="/app.js" defer></script>
 </head>
 <body>
   <header class="topbar">
     <a href="/" class="brand"><span class="mark" aria-hidden="true">✓</span>Turno<span>Certo</span></a>
     <div class="topbar-right">
+      <button type="button" id="btn-theme" class="theme-toggle-btn" aria-label="Alternar modo escuro" title="Alternar modo escuro"><span id="theme-icon" aria-hidden="true">🌙</span></button>
       <button type="button" id="btn-install" class="install-btn" hidden><span class="install-icon" aria-hidden="true">📲</span> Instalar App</button>
-      <span class="version">Calculadora <span>·</span> v0.3</span>
+      <span class="version">Calculadora <span>·</span> v0.4</span>
     </div>
   </header>
   <main>
@@ -206,7 +221,7 @@
           © 2026 Turno Certo · Criado por Francisco Vasconcelos &amp; Dr. Diogo Vasconcelos
         </div>
         <div>
-          Versão v0.3 · Lisboa, Portugal
+          Versão v0.4 · Lisboa, Portugal
         </div>
       </div>
     </footer>
