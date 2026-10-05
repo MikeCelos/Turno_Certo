@@ -71,3 +71,34 @@
 .roster-shift-val{font-weight:700;font-size:15px;color:var(--green);font-variant-numeric:tabular-nums;text-align:right}
 .btn-remove-shift{border:none;background:#edf2f4;color:#8b3434;border-radius:50%;width:30px;height:30px;font-size:13px;cursor:pointer;display:grid;place-items:center;transition:all .15s}
 .btn-remove-shift:hover{background:#ffdede;color:#a12b34}
+
+/* Rodapé Estruturado e Referências */
+.app-footer{margin-top:60px;border-top:1px solid var(--border);padding:44px 0 32px;color:#3b5966;font-size:13px}
+.footer-grid{display:grid;grid-template-columns:1.25fr 1.15fr 1.2fr;gap:36px;align-items:start}
+.footer-col h4{font-size:14px;font-weight:700;color:#172c35;margin:0 0 14px;display:flex;align-items:center;gap:6px}
+.footer-brand{display:flex;align-items:center;gap:8px;font-size:18px;font-weight:750;color:#172c35;margin-bottom:10px}
+.footer-brand span span{color:var(--green)}
+.footer-mark{display:grid;place-items:center;width:24px;height:24px;border-radius:7px;background:var(--green);color:white;font-size:13px}
+.footer-desc{font-size:13px;line-height:1.5;color:var(--muted);margin:0 0 16px}
+.footer-team{display:flex;flex-direction:column;gap:10px}
+.team-member{background:white;border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.role-badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--green)}
+.team-member strong{font-size:13px;color:#172c35}
+.team-member small{font-size:12px;color:var(--muted)}
+.footer-links{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:12px}
+.footer-links li{display:flex;flex-direction:column;gap:2px}
+.footer-links li span{font-weight:600;color:#172c35;font-size:13px}
+.footer-links li small{font-size:12px;color:var(--muted);line-height:1.4}
+.footer-contact-text{font-size:13px;line-height:1.5;color:var(--muted);margin:0 0 12px}
+.contact-email-btn{display:inline-flex;align-items:center;gap:8px;background:white;border:1px solid #b7dcce;padding:9px 12px;border-radius:9px;color:var(--green);font-weight:600;font-size:12px;text-decoration:none;word-break:break-all;transition:all .15s ease}
+.contact-email-btn:hover{background:#eef6f3;border-color:var(--green)}
+.footer-social{margin-top:14px;display:flex;gap:10px}
+.social-link{display:inline-flex;align-items:center;gap:6px;background:#edf2f4;border:1px solid var(--border);padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;color:#1d3844;text-decoration:none;transition:all .15s ease}
+.social-link:hover{background:#e1ebf0;color:#096653}
+.footer-bottom{margin-top:36px;padding-top:20px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);flex-wrap:wrap;gap:12px}
+
+@media(max-width:920px){
+  .footer-grid{grid-template-columns:1fr;gap:28px}
+  .app-footer{padding:32px 0 24px;margin-top:40px}
+  .footer-bottom{flex-direction:column;align-items:flex-start;gap:6px}
+}
