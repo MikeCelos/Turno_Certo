@@ -8,6 +8,7 @@ public class CalculateRosterRequest {
     private List<CalculateRequest> shifts = new ArrayList<>();
     private List<String> holidays = new ArrayList<>();
     private Map<String, CategoryRatesDto> customCoefficients;
+    private VmerConfigDto vmerConfig;
 
     public CalculateRosterRequest() {}
 
@@ -24,4 +25,7 @@ public class CalculateRosterRequest {
 
     public Map<String, CategoryRatesDto> getCustomCoefficients() { return customCoefficients; }
     public void setCustomCoefficients(Map<String, CategoryRatesDto> customCoefficients) { this.customCoefficients = customCoefficients; }
+
+    public VmerConfigDto getVmerConfig() { return vmerConfig; }
+    public void setVmerConfig(VmerConfigDto vmerConfig) { this.vmerConfig = vmerConfig; }
 }

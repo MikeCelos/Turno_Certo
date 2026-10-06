@@ -55,12 +55,32 @@
   <main>
     <div class="page-heading">
       <div>
-        <p class="eyebrow">ENQUADRAMENTO LEGAL E ACTS · CARREIRA MÉDICA</p>
-        <h1>Cálculo de Suplementos e Trabalho Suplementar</h1>
-        <p>Apuramento discriminado de suplementos horários, períodos noturnos e regimes de trabalho.</p>
+        <p class="eyebrow" id="heading-eyebrow">ENQUADRAMENTO LEGAL E ACTS · CARREIRA MÉDICA</p>
+        <h1 id="heading-title">Cálculo de Suplementos e Trabalho Suplementar</h1>
+        <p id="heading-desc">Apuramento discriminado de suplementos horários, períodos noturnos e regimes de trabalho.</p>
       </div>
       <span class="timezone">Hora Oficial de Lisboa</span>
     </div>
+
+    <!-- Seletor de Perfil de Atividade Clínica -->
+    <div class="profile-bar-card" role="region" aria-label="Seleção do perfil de trabalho">
+      <div class="profile-bar-label">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Perfil de Atividade:</span>
+      </div>
+      <div class="profile-chips" role="radiogroup" aria-label="Perfil de Atividade Médica">
+        <button type="button" class="profile-chip active" data-profile="hospital" id="prof-btn-hospital">
+          Hospital SNS · Carreira Médica
+        </button>
+        <button type="button" class="profile-chip" data-profile="vmer" id="prof-btn-vmer">
+          VMER · Emergência Médica
+        </button>
+        <button type="button" class="profile-chip" data-profile="custom" id="prof-btn-custom">
+          Personalizado
+        </button>
+      </div>
+    </div>
+
     <div class="workspace">
       <section class="card input-card" aria-labelledby="form-title">
         <div class="section-title">
@@ -68,23 +88,23 @@
           <button type="button" id="example" class="text-button">Preencher exemplo</button>
         </div>
         <form id="shift-form">
-          <label for="workType">Especialidade ou serviço</label>
+          <label for="workType" id="workType-label">Especialidade ou serviço</label>
           <input id="workType" name="workType" value="Anestesiologia" required maxlength="100">
-          <fieldset class="regime">
-            <legend>Regime de trabalho</legend>
-            <div class="segmented">
+          <fieldset class="regime" id="regime-fieldset">
+            <legend id="regime-legend">Regime de trabalho</legend>
+            <div class="segmented" id="regime-segmented">
               <label><input type="radio" name="regime" value="normal"><span>Normal</span></label>
               <label><input type="radio" name="regime" value="misto"><span>Misto</span></label>
               <label><input type="radio" name="regime" value="extra" checked><span>Extraordinário</span></label>
             </div>
           </fieldset>
           <div class="preset-box">
-            <span class="preset-title">Modelos de escala habituais:</span>
-            <div class="preset-buttons">
-              <button type="button" class="preset-pill" data-hours="night">Noite 12h (20:00–08:00)</button>
-              <button type="button" class="preset-pill" data-hours="day">Dia 12h (08:00–20:00)</button>
-              <button type="button" class="preset-pill" data-hours="24h-mixed">24h Misto (12h Normal + 12h Extra)</button>
-              <button type="button" class="preset-pill" data-hours="full">24h Trabalho Suplementar</button>
+            <div class="preset-header">
+              <span class="preset-title">Modelos de escala habituais:</span>
+              <button type="button" id="btn-add-preset" class="text-button" title="Adicionar modelo de escala habitual">+ Adicionar modelo</button>
+            </div>
+            <div id="preset-buttons" class="preset-buttons">
+              <!-- Renderizado dinamicamente -->
             </div>
           </div>
           <label for="start">Horário de entrada</label>
@@ -98,24 +118,25 @@
             <label for="extraStart">Início do período extraordinário</label>
             <input type="datetime-local" id="extraStart" name="extraStart" step="60">
             <p class="mixed-help">Período normal: apenas suplemento de horário correspondente. Período extraordinário: remuneração integral com os coeficientes de trabalho suplementar aplicáveis.</p>
-            <label for="normalRate" class="optional-label">Valor-hora normal · R (opcional, se contratualmente distinto)</label>
-            <div class="money-input"><input type="text" inputmode="decimal" id="normalRate" name="normalRate" placeholder="Igual ao R do trabalho extraordinário"><span>€/h</span></div>
+            <label for="extraRate" id="extraRateLabel">Valor-hora extraordinário (período suplementar)</label>
+            <div class="money-input"><input type="text" inputmode="decimal" id="extraRate" name="extraRate" placeholder="Ex: 16,33"><span>€/h</span></div>
           </div>
           <div class="rate-row">
             <div>
               <div class="label-with-help">
-                <label for="rate">Valor-hora base (R)</label>
+                <label for="rate" id="rate-label">Valor-hora base contratual (R)</label>
                 <button type="button" id="rate-help-btn" class="help-btn" aria-label="Ajuda sobre o valor-hora base" title="Critério para o valor-hora base">?</button>
               </div>
               <div class="money-input"><input type="text" inputmode="decimal" id="rate" name="rate" required value="20,00"><span>€/h</span></div>
             </div>
-            <p>Valor-hora base de referência para a remuneração.</p>
+            <p id="rate-desc">Valor-hora base de referência para a remuneração.</p>
           </div>
           <div id="rate-help-box" class="help-box" hidden>
             <strong>Critério de apuramento do valor-hora base (R)</strong>
             <ul>
-              <li><strong>Horas Extraordinárias:</strong> Indique o valor-hora que consta nas rubricas de trabalho suplementar do recibo de vencimento (frequentemente majorado face ao valor base simples).</li>
-              <li><strong>Regime Normal:</strong> Indique o valor-hora contratual direto da categoria e escalão (exemplo: 14,52 €/h).</li>
+              <li><strong>Horas Extraordinárias:</strong> Indique o valor-hora que consta nas rubricas de trabalho suplementar do recibo de vencimento.</li>
+              <li><strong>Regime Normal / Base:</strong> Indique o vencimento-hora contratual direto da categoria e escalão (exemplo: 14,52 €/h).</li>
+              <li><strong>VMER:</strong> Indique a Hora Base VMER contratada (exemplo: 29,91 €/h).</li>
             </ul>
           </div>
           <details class="settings"><summary>Feriados <span id="holiday-count">0 configurados</span></summary><p class="help">Adicione os feriados aplicáveis ao turno (nacionais e municipais). Não são calculados automaticamente.</p><div class="holiday-controls"><input type="date" id="holiday-date" aria-label="Data do feriado"><button type="button" id="add-holiday" class="secondary">Adicionar</button></div><ul id="holiday-list"></ul><p id="holiday-error" class="field-error" role="status"></p></details>
@@ -289,7 +310,7 @@
           <h3>Parâmetros de Remuneração</h3>
           <p class="dialog-subtitle">Configuração de coeficientes remuneratórios e preferências da aplicação.</p>
         </div>
-        <button type="button" id="close-settings" class="close-btn" aria-label="Fechar">✕</button>
+        <button type="button" id="close-settings" class="close-btn" aria-label="Fechar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       </div>
 
       <div class="settings-content">
@@ -411,6 +432,85 @@
           <p id="settings-status" class="settings-status-msg" hidden></p>
         </section>
 
+        <!-- Secção 2: Tabela de Remuneração e Multiplicadores VMER -->
+        <section class="settings-section vmer-section">
+          <div class="section-badge-header">
+            <h4>Tabela de Remuneração VMER (Emergência Médica)</h4>
+            <span class="badge-tag">Customizável</span>
+          </div>
+          <p class="section-desc">
+            Configuração da remuneração VMER conforme o acordo do seu hospital/ULS. Suporta tabela de multiplicadores por bloco horário ou valor-hora linear.
+          </p>
+
+          <div class="vmer-settings-top">
+            <div class="vmer-base-field">
+              <label for="vmer-config-base-rate">Hora Base VMER (€/h)</label>
+              <div class="money-input">
+                <input type="text" inputmode="decimal" id="vmer-config-base-rate" value="29,91">
+                <span>€/h</span>
+              </div>
+            </div>
+            <div class="vmer-mode-field">
+              <label for="vmer-config-mode">Modo de Apuramento</label>
+              <select id="vmer-config-mode">
+                <option value="multipliers" selected>Tabela por Blocos de Turno (Multiplicadores R)</option>
+                <option value="hourly">Multiplicação Linear Direta (Horas × Valor/h)</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="vmer-table-box" class="vmer-table-box">
+            <span class="vmer-table-title">Multiplicadores por Bloco Horário (em unidades de R / Hora Base):</span>
+            <div class="table-scroll">
+              <table class="vmer-edit-table">
+                <thead>
+                  <tr>
+                    <th>Bloco Horário</th>
+                    <th>Dia Útil</th>
+                    <th>Vesp. Feriado</th>
+                    <th>Sábados</th>
+                    <th>Domingos / Feriados</th>
+                    <th>Dom. Vesp. Feriado</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>08:00 – 15:00</strong> <small>(7h Manhã)</small></td>
+                    <td><input type="number" step="0.5" min="0" id="vmer-m-util-08-15" value="7.0"> R</td>
+                    <td><input type="number" step="0.5" min="0" id="vmer-m-vesp-08-15" value="7.0" disabled title="Segue dia útil"> R</td>
+                    <td><input type="number" step="0.5" min="0" id="vmer-m-sab-08-15" value="8.0"> R</td>
+                    <td><input type="number" step="0.5" min="0" id="vmer-m-dom-08-15" value="10.5"> R</td>
+                    <td><input type="number" step="0.5" min="0" id="vmer-m-dom-vesp-08-15" value="10.5" disabled title="Segue domingo"> R</td>
+                  </tr>
+                  <tr>
+                    <td><strong>15:00 – 22:00</strong> <small>(7h Tarde)</small></td>
+                    <td><input type="number" step="0.5" min="0" id="vmer-m-util-15-22" value="8.0"> R</td>
+                    <td><input type="number" step="0.5" min="0" id="vmer-m-vesp-15-22" value="8.0" disabled title="Segue dia útil"> R</td>
+                    <td><input type="number" step="0.5" min="0" id="vmer-m-sab-15-22" value="11.5"> R</td>
+                    <td><input type="number" step="0.5" min="0" id="vmer-m-dom-15-22" value="11.5"> R</td>
+                    <td><input type="number" step="0.5" min="0" id="vmer-m-dom-vesp-15-22" value="11.5" disabled title="Segue domingo"> R</td>
+                  </tr>
+                  <tr>
+                    <td><strong>22:00 – 08:00</strong> <small>(10h Noite)</small></td>
+                    <td><input type="number" step="0.5" min="0" id="vmer-m-util-22-08" value="15.0"> R</td>
+                    <td><input type="number" step="0.5" min="0" id="vmer-m-vesp-22-08" value="19.0"> R</td>
+                    <td><input type="number" step="0.5" min="0" id="vmer-m-sab-22-08" value="20.0"> R</td>
+                    <td><input type="number" step="0.5" min="0" id="vmer-m-dom-22-08" value="16.0"> R</td>
+                    <td><input type="number" step="0.5" min="0" id="vmer-m-dom-vesp-22-08" value="20.0"> R</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="table-footnote">Multiplicador × Hora Base = Valor bruto apurado para o turno completo. Pequenos turnos parciais são calculados proporcionalmente.</p>
+          </div>
+
+          <div class="settings-actions">
+            <button type="button" id="btn-reset-vmer-table" class="secondary">Repor valores padrão VMER</button>
+            <button type="button" id="btn-save-vmer-settings" class="primary">Guardar tabela VMER</button>
+          </div>
+          <p id="vmer-settings-status" class="settings-status-msg" hidden></p>
+        </section>
+
         <!-- Secção 2: Nuvem e Supabase -->
         <section class="settings-section cloud-section">
           <div class="section-badge-header">
@@ -462,7 +562,7 @@
           <h3>Área de Utilizador &amp; Sincronização</h3>
           <p class="dialog-subtitle">Gestão de perfil e persistência remota da escala de serviço.</p>
         </div>
-        <button type="button" id="close-auth" class="close-btn" aria-label="Fechar">✕</button>
+        <button type="button" id="close-auth" class="close-btn" aria-label="Fechar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       </div>
 
       <div class="auth-optional-banner">
@@ -555,11 +655,67 @@
     </div>
   </dialog>
 
+  <!-- Modal de Gestão de Modelo de Escala / Atalho de Turno -->
+  <dialog id="preset-dialog" class="auth-dialog">
+    <div class="auth-card">
+      <div class="dialog-header">
+        <h3 id="preset-dialog-title">Adicionar Modelo de Escala</h3>
+        <button type="button" id="close-preset-dialog" class="close-btn" aria-label="Fechar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+      </div>
+      <p class="section-desc">Crie ou edite um atalho habitual de escala para preenchimento com um clique.</p>
+      <form id="preset-form" class="auth-form">
+        <input type="hidden" id="preset-edit-id" value="">
+        <label for="preset-name">Designação do modelo</label>
+        <input type="text" id="preset-name" required placeholder="Ex: VMER Manhã, Urgência 12h, Piquete" maxlength="50">
+
+        <div class="preset-times-row">
+          <div>
+            <label for="preset-start-time">Hora de início</label>
+            <input type="time" id="preset-start-time" required value="08:00">
+          </div>
+          <div>
+            <label for="preset-end-time">Hora de fim</label>
+            <input type="time" id="preset-end-time" required value="20:00">
+          </div>
+        </div>
+
+        <label class="checkbox-inline">
+          <input type="checkbox" id="preset-next-day">
+          <span>O turno termina no dia seguinte (+1 dia)</span>
+        </label>
+
+        <label for="preset-regime-select">Regime de trabalho</label>
+        <select id="preset-regime-select">
+          <option value="extra" selected>Extraordinário (Trabalho Suplementar)</option>
+          <option value="normal">Normal</option>
+          <option value="misto">Misto (Normal + Extraordinário)</option>
+          <option value="vmer">VMER (Bloco / Emergência Médica)</option>
+        </select>
+
+        <div id="preset-extra-start-box" hidden>
+          <label for="preset-extra-start-time">Hora de transição para extraordinário</label>
+          <input type="time" id="preset-extra-start-time" value="20:00">
+        </div>
+
+        <label for="preset-rate-input">Valor-hora específico (€/h, opcional)</label>
+        <div class="money-input">
+          <input type="text" inputmode="decimal" id="preset-rate-input" placeholder="Opcional (se vazio, usa o valor do perfil)">
+          <span>€/h</span>
+        </div>
+
+        <div class="dialog-actions-row">
+          <button type="button" id="btn-delete-preset" class="text-button danger-text" hidden>Eliminar modelo</button>
+          <button type="submit" class="primary auth-submit-btn">Guardar modelo</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
   <dialog id="install-dialog" class="install-dialog">
     <div class="install-card">
       <div class="install-header">
         <h3>Instalar Aplicação</h3>
-        <button type="button" id="close-install" class="close-btn" aria-label="Fechar">✕</button>
+        <button type="button" id="close-install" class="close-btn" aria-label="Fechar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
       </div>
       <div id="ios-guide" class="install-guide" hidden>
         <p>Para adicionar ao ecrã inicial no <strong>iOS (Safari)</strong>:</p>

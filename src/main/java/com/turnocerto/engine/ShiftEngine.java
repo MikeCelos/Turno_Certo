@@ -265,6 +265,18 @@ public class ShiftEngine {
     }
 
     private static String makeCategoryLabel(Segment seg) {
+        if ("vmer".equals(seg.getRegime())) {
+            if ("vmer-manha".equals(seg.getCategory())) {
+                return "VMER Manhã (" + formatCoeff(seg.getCoefficient()) + ")";
+            }
+            if ("vmer-tarde".equals(seg.getCategory())) {
+                return "VMER Tarde (" + formatCoeff(seg.getCoefficient()) + ")";
+            }
+            if ("vmer-noturno".equals(seg.getCategory())) {
+                return "VMER Noturno (" + formatCoeff(seg.getCoefficient()) + ")";
+            }
+            return "VMER (" + formatCoeff(seg.getCoefficient()) + ")";
+        }
         if ("extra".equals(seg.getRegime())) {
             if (seg.isFirstExtra()) {
                 return "1.ª Hora Extraordinária (" + formatCoeff(seg.getCoefficient()) + ")";
@@ -317,6 +329,10 @@ public class ShiftEngine {
     }
 
     public static RosterCalculationResult calculateRoster(List<Shift> shifts, Profile profile) {
+        return calculateRoster(shifts, profile, null);
+    }
+
+    public static RosterCalculationResult calculateRoster(List<Shift> shifts, Profile profile, com.turnocerto.dto.VmerConfigDto vmerConfig) {
         validateProfile(profile);
         if (shifts == null || shifts.isEmpty()) {
             throw new IllegalArgumentException("A lista de turnos não pode estar vazia.");
@@ -329,7 +345,9 @@ public class ShiftEngine {
         long totalNumerator = 0L;
 
         for (Shift s : shifts) {
-            ShiftCalculationResult res = calculateShift(s, profile);
+            ShiftCalculationResult res = s.isVmer()
+                    ? VmerShiftEngine.calculateShift(s, profile, vmerConfig)
+                    : calculateShift(s, profile);
             shiftResults.add(res);
             totalMinutes += res.getTotalMinutes();
 

@@ -15,6 +15,9 @@ public class CalculateRequest {
     private String extraStart;
     private String extraStartOccurrence;
     private String normalRate;
+    private String profileType; // "hospital" ou "vmer"
+    private String extraRate;
+    private VmerConfigDto vmerConfig;
     private List<String> holidays = new ArrayList<>();
     private Map<String, CategoryRatesDto> customCoefficients;
 
@@ -78,4 +81,13 @@ public class CalculateRequest {
 
     public Map<String, CategoryRatesDto> getCustomCoefficients() { return customCoefficients; }
     public void setCustomCoefficients(Map<String, CategoryRatesDto> customCoefficients) { this.customCoefficients = customCoefficients; }
+
+    public String getProfileType() { return profileType; }
+    public void setProfileType(String profileType) { this.profileType = profileType; }
+
+    public String getExtraRate() { return extraRate; }
+    public void setExtraRate(String extraRate) { this.extraRate = extraRate; }
+
+    public VmerConfigDto getVmerConfig() { return vmerConfig; }
+    public void setVmerConfig(VmerConfigDto vmerConfig) { this.vmerConfig = vmerConfig; }
 }

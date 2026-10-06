@@ -4,6 +4,7 @@ import com.turnocerto.dto.CalculateRequest;
 import com.turnocerto.dto.CategoryRatesDto;
 import com.turnocerto.engine.LisbonTimeUtils;
 import com.turnocerto.engine.ShiftEngine;
+import com.turnocerto.engine.VmerShiftEngine;
 import com.turnocerto.model.CategoryRates;
 import com.turnocerto.model.Profile;
 import com.turnocerto.model.Shift;
@@ -58,9 +59,26 @@ public class ShiftCalculatorController {
             normalRateCents = LisbonTimeUtils.parseRateCents(request.getNormalRate());
         }
 
-        Shift shift = new Shift(start, end, request.getRegime(), request.getWorkType(), rateCents, extraStart, normalRateCents);
+        if (request.getExtraRate() != null && !request.getExtraRate().trim().isEmpty()) {
+            long extraCents = LisbonTimeUtils.parseRateCents(request.getExtraRate());
+            if (normalRateCents == null) {
+                normalRateCents = rateCents;
+            }
+            rateCents = extraCents;
+        }
+
+        boolean isVmer = "vmer".equalsIgnoreCase(request.getProfileType())
+                || "vmer".equalsIgnoreCase(request.getRegime())
+                || (request.getWorkType() != null && request.getWorkType().toUpperCase().contains("VMER"));
+
+        Shift shift = new Shift(start, end, request.getRegime(), request.getWorkType(), rateCents, extraStart, normalRateCents, isVmer ? "vmer" : "hospital");
         Map<String, CategoryRates> customRates = parseCustomRates(request.getCustomCoefficients());
         Profile profile = Profile.profileWithCoefficients(request.getHolidays(), customRates);
+
+        if (isVmer) {
+            ShiftCalculationResult result = VmerShiftEngine.calculateShift(shift, profile, request.getVmerConfig());
+            return ResponseEntity.ok(result);
+        }
 
         ShiftCalculationResult result = ShiftEngine.calculateShift(shift, profile);
         return ResponseEntity.ok(result);
@@ -94,12 +112,24 @@ public class ShiftCalculatorController {
                 normalRateCents = LisbonTimeUtils.parseRateCents(item.getNormalRate());
             }
 
-            shifts.add(new Shift(start, end, item.getRegime(), item.getWorkType(), rateCents, extraStart, normalRateCents));
+            if (item.getExtraRate() != null && !item.getExtraRate().trim().isEmpty()) {
+                long extraCents = LisbonTimeUtils.parseRateCents(item.getExtraRate());
+                if (normalRateCents == null) {
+                    normalRateCents = rateCents;
+                }
+                rateCents = extraCents;
+            }
+
+            boolean isVmer = "vmer".equalsIgnoreCase(item.getProfileType())
+                    || "vmer".equalsIgnoreCase(item.getRegime())
+                    || (item.getWorkType() != null && item.getWorkType().toUpperCase().contains("VMER"));
+
+            shifts.add(new Shift(start, end, item.getRegime(), item.getWorkType(), rateCents, extraStart, normalRateCents, isVmer ? "vmer" : "hospital"));
         }
 
         Map<String, CategoryRates> customRates = parseCustomRates(request.getCustomCoefficients());
         Profile profile = Profile.profileWithCoefficients(request.getHolidays(), customRates);
-        com.turnocerto.model.RosterCalculationResult result = ShiftEngine.calculateRoster(shifts, profile);
+        com.turnocerto.model.RosterCalculationResult result = ShiftEngine.calculateRoster(shifts, profile, request.getVmerConfig());
         return ResponseEntity.ok(result);
     }
 }

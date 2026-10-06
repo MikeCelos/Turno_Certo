@@ -4,12 +4,20 @@ const holidays = new Set();
 const money = cents => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(cents / 100);
 const number = value => new Intl.NumberFormat('pt-PT', { maximumFractionDigits: 4 }).format(value);
 const duration = minutes => `${Math.floor(minutes / 60)} h${minutes % 60 ? ` ${minutes % 60} min` : ''}`;
-const category = { 'util-diurno': 'Útil diurno', 'util-noturno': 'Útil noturno', 'especial-diurno': 'Especial diurno', 'especial-noturno': 'Especial noturno' };
+const category = {
+  'util-diurno': 'Útil diurno',
+  'util-noturno': 'Útil noturno',
+  'especial-diurno': 'Especial diurno',
+  'especial-noturno': 'Especial noturno',
+  'vmer-manha': 'VMER Manhã (08:00–15:00)',
+  'vmer-tarde': 'VMER Tarde (15:00–22:00)',
+  'vmer-noturno': 'VMER Noturno (22:00–08:00)'
+};
 const time = value => new Intl.DateTimeFormat('pt-PT', { timeZone: 'Europe/Lisbon', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
 const date = value => new Intl.DateTimeFormat('pt-PT', { timeZone: 'Europe/Lisbon', day: '2-digit', month: 'short' }).format(new Date(value));
 const month = value => new Intl.DateTimeFormat('pt-PT', { timeZone: 'UTC', month: 'long', year: 'numeric' }).format(new Date(`${value}-01T12:00Z`));
 
-// Multiplicadores e Coeficientes Padrão
+// Multiplicadores e Coeficientes Padrão SNS
 const COEFFICIENTS_KEY = 'tc_custom_coefficients';
 const DEFAULT_COEFFICIENTS = {
   'util-diurno': { normal: 100, firstExtra: 125, nextExtra: 150 },
@@ -39,6 +47,95 @@ function getActiveCoefficients() {
 function saveActiveCoefficients(coeffs) {
   try {
     localStorage.setItem(COEFFICIENTS_KEY, JSON.stringify(coeffs));
+  } catch (_) {}
+}
+
+// Configurações e Tabela VMER (Emergência Médica)
+const VMER_CONFIG_KEY = 'tc_vmer_config';
+const DEFAULT_VMER_CONFIG = {
+  baseRate: '29,91',
+  mode: 'multipliers',
+  multipliers: {
+    util_08_15: 700,
+    util_15_22: 800,
+    util_22_08: 1500,
+    vesp_feriado_22_08: 1900,
+    sab_08_15: 800,
+    sab_15_22: 1150,
+    sab_22_08: 2000,
+    dom_08_15: 1050,
+    dom_15_22: 1150,
+    dom_22_08: 1600,
+    dom_vesp_feriado_22_08: 2000,
+  }
+};
+
+function getActiveVmerConfig() {
+  try {
+    const saved = localStorage.getItem(VMER_CONFIG_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === 'object') {
+        return {
+          baseRate: parsed.baseRate || DEFAULT_VMER_CONFIG.baseRate,
+          mode: parsed.mode || DEFAULT_VMER_CONFIG.mode,
+          multipliers: { ...DEFAULT_VMER_CONFIG.multipliers, ...(parsed.multipliers || {}) }
+        };
+      }
+    }
+  } catch (_) {}
+  return JSON.parse(JSON.stringify(DEFAULT_VMER_CONFIG));
+}
+
+function saveActiveVmerConfig(cfg) {
+  try {
+    localStorage.setItem(VMER_CONFIG_KEY, JSON.stringify(cfg));
+  } catch (_) {}
+}
+
+// Perfis de Atividade e Modelos de Escala (Presets)
+const PROFILE_KEY = 'tc_active_profile';
+const DEFAULT_PRESETS = {
+  hospital: [
+    { id: 'h_night', name: 'Noite 12h (20:00–08:00)', start: '20:00', end: '08:00', nextDay: true, regime: 'extra' },
+    { id: 'h_day', name: 'Dia 12h (08:00–20:00)', start: '08:00', end: '20:00', nextDay: false, regime: 'extra' },
+    { id: 'h_mixed', name: '24h Misto (12h Normal + 12h Extra)', start: '08:00', end: '08:00', nextDay: true, regime: 'misto', extraStart: '20:00' },
+    { id: 'h_full', name: '24h Trabalho Suplementar', start: '08:00', end: '08:00', nextDay: true, regime: 'extra' },
+  ],
+  vmer: [
+    { id: 'v_manha', name: 'Manhã 7h (08:00–15:00)', start: '08:00', end: '15:00', nextDay: false, regime: 'vmer' },
+    { id: 'v_tarde', name: 'Tarde 7h (15:00–22:00)', start: '15:00', end: '22:00', nextDay: false, regime: 'vmer' },
+    { id: 'v_noite', name: 'Noite 10h (22:00–08:00)', start: '22:00', end: '08:00', nextDay: true, regime: 'vmer' },
+    { id: 'v_24h', name: '24h VMER (08:00–08:00)', start: '08:00', end: '08:00', nextDay: true, regime: 'vmer' },
+  ],
+  custom: [
+    { id: 'c_urg12', name: 'Urgência 12h (08:00–20:00)', start: '08:00', end: '20:00', nextDay: false, regime: 'extra' },
+    { id: 'c_noite12', name: 'Noite 12h (20:00–08:00)', start: '20:00', end: '08:00', nextDay: true, regime: 'extra' },
+  ]
+};
+
+function getActiveProfile() {
+  try {
+    const saved = localStorage.getItem(PROFILE_KEY);
+    if (saved === 'hospital' || saved === 'vmer' || saved === 'custom') return saved;
+  } catch (_) {}
+  return 'hospital';
+}
+
+function getPresetsForProfile(profileId) {
+  try {
+    const saved = localStorage.getItem(`tc_presets_${profileId}`);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (_) {}
+  return JSON.parse(JSON.stringify(DEFAULT_PRESETS[profileId] || DEFAULT_PRESETS.hospital));
+}
+
+function savePresetsForProfile(profileId, presets) {
+  try {
+    localStorage.setItem(`tc_presets_${profileId}`, JSON.stringify(presets));
   } catch (_) {}
 }
 
@@ -94,20 +191,43 @@ $('add-holiday').onclick = () => {
 };
 function render(result) {
   $('total').textContent = money(result.payableCents);
-  $('regime-badge').textContent = result.regime === 'extra' ? 'Extraordinário' : (result.regime === 'misto' ? 'Misto' : 'Normal');
+  $('regime-badge').textContent = result.regime === 'extra'
+    ? 'Extraordinário'
+    : (result.regime === 'misto'
+      ? 'Misto'
+      : (result.regime === 'vmer' ? 'VMER' : 'Normal'));
+
   $('total-description').textContent = result.regime === 'extra'
     ? 'O trabalho extra é pago pelo coeficiente completo.'
     : (result.regime === 'misto'
       ? 'Turno misto: período normal (apenas suplementos) e período extraordinário (coeficiente completo).'
-      : 'Apenas o suplemento. O valor de 1 R já está incluído na base.');
+      : (result.regime === 'vmer'
+        ? 'Turno VMER apurado por blocos horários com tabela de multiplicadores R.'
+        : 'Apenas o suplemento. O valor de 1 R já está incluído na base.'));
+
   $('duration').textContent = duration(result.totalMinutes);
-  $('base-rate').textContent = `${money(result.segments[0].rateCents)}/h`;
+
+  // Valor-hora base no resumo do cartão:
+  if (result.regime === 'misto' && result.segments && result.segments.length > 1) {
+    const normalSeg = result.segments.find(s => s.regime === 'normal');
+    const extraSeg = result.segments.find(s => s.regime === 'extra');
+    if (normalSeg && extraSeg && normalSeg.rateCents !== extraSeg.rateCents) {
+      $('base-rate').textContent = `${money(normalSeg.rateCents)} (Base) · ${money(extraSeg.rateCents)} (Extra)`;
+    } else {
+      $('base-rate').textContent = `${money(result.segments[0].rateCents)}/h`;
+    }
+  } else if (result.regime === 'vmer') {
+    $('base-rate').textContent = `${money(result.segments[0].rateCents)}/h (Base VMER)`;
+  } else {
+    $('base-rate').textContent = `${money(result.segments[0].rateCents)}/h`;
+  }
+
   $('segment-count').textContent = result.segments.length;
   $('segments').replaceChildren(); $('timeline').replaceChildren();
   for (const s of result.segments) {
     const bar = document.createElement('i'); bar.className = s.category;
     // flex-grow is a numeric DOM style property, never interpolated HTML.
-    bar.style.flexGrow = String(s.minutes); bar.title = `${category[s.category]} · ${duration(s.minutes)}`;
+    bar.style.flexGrow = String(s.minutes); bar.title = `${category[s.category] || s.category} · ${duration(s.minutes)}`;
     $('timeline').append(bar);
     const row = document.createElement('tr');
     const startDateStr = date(s.start);
@@ -115,14 +235,28 @@ function render(result) {
     const dateLabel = startDateStr === endDateStr ? startDateStr : `${startDateStr} – ${endDateStr}`;
 
     const categoryLabel = category[s.category] || s.category;
-    const regimeDetail = result.regime === 'misto' ? (s.regime === 'normal' ? 'Normal' : 'Extra') : '';
+    const regimeDetail = result.regime === 'misto'
+      ? (s.regime === 'normal' ? 'Normal' : 'Extra')
+      : (result.regime === 'vmer' ? 'VMER' : '');
     const secondLine = [dateLabel, categoryLabel, regimeDetail].filter(Boolean).join(' · ');
-    const thirdLine = s.firstExtra ? 'Primeira hora extra' : (s.regime === 'normal' && s.payableCoefficient === 0 ? 'Incluído na remuneração base' : '');
+    const thirdLine = s.firstExtra
+      ? 'Primeira hora extra'
+      : (s.regime === 'normal' && s.payableCoefficient === 0
+        ? 'Incluído na remuneração base'
+        : (result.regime === 'vmer' ? `Multiplicador: ${number(s.payableCoefficient / 100)} R` : ''));
+
+    const calculationText = result.regime === 'vmer'
+      ? `${number(s.payableCoefficient / 100)} R × ${money(s.rateCents)}`
+      : `${number(s.minutes / 60)} h × ${number(s.payableCoefficient / 100)} × ${money(s.rateCents)}`;
+
+    const coeffSubtext = result.regime === 'vmer'
+      ? `${duration(s.minutes)} cumpridos`
+      : `Coeficiente total: ${number(s.coefficient / 100)} R`;
 
     const values = [
       [`${time(s.start)} – ${time(s.end)}`, secondLine, thirdLine],
       [duration(s.minutes)],
-      [`${number(s.minutes / 60)} h × ${number(s.payableCoefficient / 100)} × ${money(s.rateCents)}`, `Coeficiente total: ${number(s.coefficient / 100)} R`],
+      [calculationText, coeffSubtext],
       [money(s.payableCents)],
     ];
     values.forEach((lines, index) => {
@@ -142,9 +276,21 @@ async function calculate(isExample = false) {
   const currentRevision = revision;
   $('calculate').disabled = true; $('calculate').textContent = 'A calcular…'; $('form-error').hidden = true;
   try {
+    const activeProfile = getActiveProfile();
     const input = Object.fromEntries(new FormData(form));
     input.holidays = [...holidays];
     input.customCoefficients = getActiveCoefficients();
+    input.profileType = activeProfile;
+
+    if (activeProfile === 'vmer') {
+      input.vmerConfig = getActiveVmerConfig();
+      input.regime = 'vmer';
+    } else if (input.regime === 'misto') {
+      // No turno misto, mapeamento rigoroso sem inversão:
+      input.normalRate = $('rate').value.trim();
+      input.extraRate = $('extraRate') ? $('extraRate').value.trim() : '';
+    }
+
     const response = await fetch('/api/calculate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
     const result = await response.json();
     if (revision !== currentRevision) return;
@@ -169,8 +315,14 @@ const WORK_TYPE_KEY = 'tc_work_type';
 const REGIME_KEY = 'tc_regime';
 
 function updateMixedVisibility() {
-  const isMixed = form.elements['regime'] && form.elements['regime'].value === 'misto';
+  const regimeVal = form.elements['regime'] ? form.elements['regime'].value : 'extra';
+  const isMixed = regimeVal === 'misto';
   const mixedBox = $('mixed-config');
+  const rateLabel = $('rate-label');
+  const rateDesc = $('rate-desc');
+  const extraRateLabel = $('extraRateLabel');
+  const activeProfile = getActiveProfile();
+
   if (mixedBox) {
     mixedBox.hidden = !isMixed;
     if (isMixed && !$('extraStart').value) {
@@ -178,36 +330,26 @@ function updateMixedVisibility() {
       $('extraStart').value = `${anchor}T20:00`;
     }
   }
+
+  if (rateLabel && rateDesc) {
+    if (activeProfile === 'vmer') {
+      rateLabel.textContent = 'Hora Base VMER (R)';
+      rateDesc.textContent = 'Hora base contratual VMER (referência para os multiplicadores da tabela).';
+    } else if (isMixed) {
+      rateLabel.textContent = 'Valor-hora normal / base contratual (R)';
+      rateDesc.textContent = 'Vencimento base do médico (utilizado para apuramento do período normal).';
+      if (extraRateLabel) extraRateLabel.textContent = 'Valor-hora extraordinário (período suplementar)';
+    } else if (regimeVal === 'normal') {
+      rateLabel.textContent = 'Valor-hora base contratual (R)';
+      rateDesc.textContent = 'Vencimento base/hora do médico para cálculo dos suplementos.';
+    } else {
+      rateLabel.textContent = 'Valor-hora extraordinário (R)';
+      rateDesc.textContent = 'Remuneração horária aplicável ao trabalho suplementar.';
+    }
+  }
 }
 
-let hasSaved = false;
-try {
-  const savedRate = localStorage.getItem(RATE_KEY);
-  if (savedRate) { $('rate').value = savedRate; hasSaved = true; }
-  const savedWorkType = localStorage.getItem(WORK_TYPE_KEY);
-  if (savedWorkType) { $('workType').value = savedWorkType; hasSaved = true; }
-  const savedRegime = localStorage.getItem(REGIME_KEY);
-  if (savedRegime) {
-    const radio = form.querySelector(`input[name="regime"][value="${savedRegime}"]`);
-    if (radio) { radio.checked = true; hasSaved = true; }
-  }
-} catch (_) {}
-updateMixedVisibility();
-
-$('rate').addEventListener('input', () => {
-  try { localStorage.setItem(RATE_KEY, $('rate').value); } catch (_) {}
-});
-$('workType').addEventListener('input', () => {
-  try { localStorage.setItem(WORK_TYPE_KEY, $('workType').value); } catch (_) {}
-});
-form.querySelectorAll('input[name="regime"]').forEach(radio => {
-  radio.addEventListener('change', () => {
-    updateMixedVisibility();
-    try { localStorage.setItem(REGIME_KEY, radio.value); } catch (_) {}
-  });
-});
-
-// Atalhos rápidos de turnos (Presets)
+// Atalhos rápidos de turnos (Presets Dinâmicos)
 function getAnchorDate() {
   const startVal = $('start').value;
   if (startVal && /^\d{4}-\d{2}-\d{2}/.test(startVal)) {
@@ -227,37 +369,201 @@ function getNextDate(dateStr) {
   return dt.toISOString().slice(0, 10);
 }
 
-document.querySelectorAll('.preset-pill').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const anchor = getAnchorDate();
-    const next = getNextDate(anchor);
-    const type = btn.getAttribute('data-hours');
-    if (type === 'night') {
-      $('start').value = `${anchor}T20:00`;
-      $('end').value = `${next}T08:00`;
-      const extraRadio = form.querySelector('input[name="regime"][value="extra"]');
-      if (extraRadio) extraRadio.checked = true;
-      updateMixedVisibility();
-    } else if (type === 'day') {
-      $('start').value = `${anchor}T08:00`;
-      $('end').value = `${anchor}T20:00`;
-      updateMixedVisibility();
-    } else if (type === '24h-mixed') {
-      $('start').value = `${anchor}T08:00`;
-      $('extraStart').value = `${anchor}T20:00`;
-      $('end').value = `${next}T08:00`;
-      const mistoRadio = form.querySelector('input[name="regime"][value="misto"]');
-      if (mistoRadio) mistoRadio.checked = true;
-      updateMixedVisibility();
-    } else if (type === 'full') {
-      $('start').value = `${anchor}T08:00`;
-      $('end').value = `${next}T08:00`;
-      const extraRadio = form.querySelector('input[name="regime"][value="extra"]');
-      if (extraRadio) extraRadio.checked = true;
-      updateMixedVisibility();
+function renderPresets() {
+  const container = $('preset-buttons');
+  if (!container) return;
+  const profileId = getActiveProfile();
+  const presets = getPresetsForProfile(profileId);
+  container.replaceChildren();
+
+  presets.forEach((p, idx) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'preset-pill-wrap';
+
+    const pill = document.createElement('button');
+    pill.type = 'button';
+    pill.className = 'preset-pill';
+    pill.textContent = p.name;
+    pill.onclick = () => applyPreset(p);
+
+    wrap.appendChild(pill);
+
+    // Botão discreto para apagar se houver mais do que 1
+    if (presets.length > 1) {
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'preset-pill-del';
+      delBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+      delBtn.onclick = (e) => {
+        e.stopPropagation();
+        const updated = presets.filter((_, i) => i !== idx);
+        savePresetsForProfile(profileId, updated);
+        renderPresets();
+      };
+      wrap.appendChild(delBtn);
     }
-    dirty();
-    calculate();
+
+    container.appendChild(wrap);
+  });
+}
+
+function applyPreset(p) {
+  const anchor = getAnchorDate();
+  const next = getNextDate(anchor);
+
+  $('start').value = `${anchor}T${p.start}`;
+  $('end').value = p.nextDay ? `${next}T${p.end}` : `${anchor}T${p.end}`;
+
+  if (p.regime) {
+    const isVmer = p.regime === 'vmer';
+    const radio = form.querySelector(`input[name="regime"][value="${isVmer ? 'extra' : p.regime}"]`);
+    if (radio) radio.checked = true;
+    if (p.regime === 'misto' && p.extraStart) {
+      $('extraStart').value = `${anchor}T${p.extraStart}`;
+    }
+  }
+
+  if (p.rate) {
+    $('rate').value = p.rate;
+  }
+
+  updateMixedVisibility();
+  dirty();
+  calculate();
+}
+
+function setProfile(profileId) {
+  try { localStorage.setItem(PROFILE_KEY, profileId); } catch (_) {}
+  document.querySelectorAll('.profile-chip').forEach(btn => {
+    btn.classList.toggle('active', btn.getAttribute('data-profile') === profileId);
+  });
+
+  const headingEyebrow = $('heading-eyebrow');
+  const headingTitle = $('heading-title');
+  const headingDesc = $('heading-desc');
+  const workType = $('workType');
+  const rateInput = $('rate');
+  const vmerCfg = getActiveVmerConfig();
+
+  if (profileId === 'vmer') {
+    if (headingEyebrow) headingEyebrow.textContent = 'EMERGÊNCIA MÉDICA PRÉ-HOSPITALAR · VMER';
+    if (headingTitle) headingTitle.textContent = 'Apuramento de Turnos e Escalas VMER';
+    if (headingDesc) headingDesc.textContent = 'Cálculo por blocos horários (08-15, 15-22, 22-08) com tabela de multiplicadores R.';
+    if (workType && (!workType.value || workType.value === 'Anestesiologia')) workType.value = 'VMER';
+    if (rateInput && (!rateInput.value || rateInput.value === '14,52' || rateInput.value === '20,00')) {
+      rateInput.value = vmerCfg.baseRate || '29,91';
+    }
+  } else if (profileId === 'custom') {
+    if (headingEyebrow) headingEyebrow.textContent = 'REGIME PERSONALIZADO · OUTROS SERVIÇOS';
+    if (headingTitle) headingTitle.textContent = 'Apuramento com Parâmetros Customizados';
+    if (headingDesc) headingDesc.textContent = 'Configure os modelos de escala habituais e taxas de remuneração pretendidas.';
+  } else {
+    if (headingEyebrow) headingEyebrow.textContent = 'ENQUADRAMENTO LEGAL E ACTS · CARREIRA MÉDICA';
+    if (headingTitle) headingTitle.textContent = 'Cálculo de Suplementos e Trabalho Suplementar';
+    if (headingDesc) headingDesc.textContent = 'Apuramento discriminado de suplementos horários, períodos noturnos e regimes de trabalho.';
+    if (workType && workType.value === 'VMER') workType.value = 'Anestesiologia';
+  }
+
+  updateMixedVisibility();
+  renderPresets();
+  dirty();
+  calculate();
+}
+
+// Configuração dos botões de perfil
+document.querySelectorAll('.profile-chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    setProfile(btn.getAttribute('data-profile'));
+  });
+});
+
+// Modal de Adicionar Modelo de Escala
+const btnAddPreset = $('btn-add-preset');
+const presetDialog = $('preset-dialog');
+const closePresetDialog = $('close-preset-dialog');
+const presetForm = $('preset-form');
+const presetRegimeSelect = $('preset-regime-select');
+const presetExtraStartBox = $('preset-extra-start-box');
+
+if (btnAddPreset && presetDialog) {
+  btnAddPreset.onclick = () => {
+    if (presetForm) presetForm.reset();
+    if (presetExtraStartBox) presetExtraStartBox.hidden = true;
+    openModal(presetDialog);
+  };
+}
+
+if (closePresetDialog && presetDialog) {
+  closePresetDialog.onclick = () => closeModal(presetDialog);
+}
+
+if (presetDialog) {
+  presetDialog.addEventListener('click', e => {
+    if (e.target === presetDialog) closeModal(presetDialog);
+  });
+}
+
+if (presetRegimeSelect && presetExtraStartBox) {
+  presetRegimeSelect.onchange = () => {
+    presetExtraStartBox.hidden = presetRegimeSelect.value !== 'misto';
+  };
+}
+
+if (presetForm) {
+  presetForm.onsubmit = e => {
+    e.preventDefault();
+    const profileId = getActiveProfile();
+    const presets = getPresetsForProfile(profileId);
+    const newPreset = {
+      id: 'p_' + Date.now(),
+      name: $('preset-name').value.trim(),
+      start: $('preset-start-time').value,
+      end: $('preset-end-time').value,
+      nextDay: $('preset-next-day').checked,
+      regime: $('preset-regime-select').value,
+      extraStart: $('preset-regime-select').value === 'misto' ? $('preset-extra-start-time').value : null,
+      rate: $('preset-rate-input') && $('preset-rate-input').value.trim() ? $('preset-rate-input').value.trim() : null
+    };
+    presets.push(newPreset);
+    savePresetsForProfile(profileId, presets);
+    renderPresets();
+    closeModal(presetDialog);
+  };
+}
+
+let hasSaved = false;
+try {
+  const savedRate = localStorage.getItem(RATE_KEY);
+  if (savedRate) { $('rate').value = savedRate; hasSaved = true; }
+  const savedWorkType = localStorage.getItem(WORK_TYPE_KEY);
+  if (savedWorkType) { $('workType').value = savedWorkType; hasSaved = true; }
+  const savedRegime = localStorage.getItem(REGIME_KEY);
+  if (savedRegime) {
+    const radio = form.querySelector(`input[name="regime"][value="${savedRegime}"]`);
+    if (radio) { radio.checked = true; hasSaved = true; }
+  }
+} catch (_) {}
+
+const initProfile = getActiveProfile();
+document.querySelectorAll('.profile-chip').forEach(btn => {
+  btn.classList.toggle('active', btn.getAttribute('data-profile') === initProfile);
+});
+renderPresets();
+updateMixedVisibility();
+
+$('rate').addEventListener('input', () => {
+  try { localStorage.setItem(RATE_KEY, $('rate').value); } catch (_) {}
+});
+if ($('extraRate')) {
+  $('extraRate').addEventListener('input', () => dirty());
+}
+$('workType').addEventListener('input', () => {
+  try { localStorage.setItem(WORK_TYPE_KEY, $('workType').value); } catch (_) {}
+});
+form.querySelectorAll('input[name="regime"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    updateMixedVisibility();
+    try { localStorage.setItem(REGIME_KEY, radio.value); } catch (_) {}
   });
 });
 
@@ -477,16 +783,19 @@ async function calculateRoster() {
       shifts: rosterShifts.map(s => ({
         workType: s.workType,
         regime: s.regime,
+        profileType: s.profileType || (s.regime === 'vmer' ? 'vmer' : 'hospital'),
         start: s.start,
         end: s.end,
         rate: s.rate,
+        extraRate: s.extraRate || null,
         extraStart: s.extraStart || null,
         normalRate: s.normalRate || null,
         startOccurrence: s.startOccurrence || null,
         endOccurrence: s.endOccurrence || null
       })),
       holidays: [...holidays],
-      customCoefficients: getActiveCoefficients()
+      customCoefficients: getActiveCoefficients(),
+      vmerConfig: getActiveVmerConfig()
     };
     const response = await fetch('/api/calculate-roster', {
       method: 'POST',
@@ -595,7 +904,7 @@ function renderRoster(result) {
       const delBtn = document.createElement('button');
       delBtn.type = 'button';
       delBtn.className = 'btn-remove-shift';
-      delBtn.textContent = '✕';
+      delBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
       delBtn.title = 'Remover turno';
       delBtn.setAttribute('aria-label', `Remover turno ${idx + 1}`);
       delBtn.onclick = () => removeRosterShift(shiftItem.id);
@@ -692,16 +1001,20 @@ if ($('load-roster-example')) {
 if ($('add-to-roster')) {
   $('add-to-roster').onclick = () => {
     if (!form.reportValidity()) return;
-    const isMixed = form.elements['regime'] && form.elements['regime'].value === 'misto';
+    const activeProfile = getActiveProfile();
+    const isVmer = activeProfile === 'vmer';
+    const isMixed = !isVmer && form.elements['regime'] && form.elements['regime'].value === 'misto';
     const shiftItem = {
       id: 's_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
-      workType: $('workType').value.trim() || 'Anestesia',
-      regime: form.elements['regime'].value,
+      workType: $('workType').value.trim() || (isVmer ? 'VMER' : 'Anestesiologia'),
+      regime: isVmer ? 'vmer' : form.elements['regime'].value,
+      profileType: activeProfile,
       start: $('start').value,
       end: $('end').value,
       rate: $('rate').value,
+      extraRate: (isMixed && $('extraRate') && $('extraRate').value) ? $('extraRate').value : null,
       extraStart: (isMixed && $('extraStart').value) ? $('extraStart').value : null,
-      normalRate: (isMixed && $('normalRate').value) ? $('normalRate').value : null,
+      normalRate: isMixed ? $('rate').value : null,
       startOccurrence: $('startOccurrence').value || null,
       endOccurrence: $('endOccurrence').value || null
     };
@@ -791,6 +1104,32 @@ function populateSettingsModal() {
       }
     }
 
+    // VMER Config
+    const vmerCfg = getActiveVmerConfig();
+    if ($('vmer-config-base-rate')) $('vmer-config-base-rate').value = vmerCfg.baseRate || '29,91';
+    if ($('vmer-config-mode')) {
+      $('vmer-config-mode').value = vmerCfg.mode || 'multipliers';
+      if ($('vmer-table-box')) {
+        $('vmer-table-box').hidden = vmerCfg.mode === 'hourly';
+      }
+    }
+    const mult = vmerCfg.multipliers || {};
+    const setMult = (id, val) => {
+      const el = $(id);
+      if (el && typeof val === 'number') el.value = (val / 100).toFixed(1);
+    };
+    setMult('vmer-m-util-08-15', mult.util_08_15);
+    setMult('vmer-m-util-15-22', mult.util_15_22);
+    setMult('vmer-m-util-22-08', mult.util_22_08);
+    setMult('vmer-m-vesp-22-08', mult.vesp_feriado_22_08);
+    setMult('vmer-m-sab-08-15', mult.sab_08_15);
+    setMult('vmer-m-sab-15-22', mult.sab_15_22);
+    setMult('vmer-m-sab-22-08', mult.sab_22_08);
+    setMult('vmer-m-dom-08-15', mult.dom_08_15);
+    setMult('vmer-m-dom-15-22', mult.dom_15_22);
+    setMult('vmer-m-dom-22-08', mult.dom_22_08);
+    setMult('vmer-m-dom-vesp-22-08', mult.dom_vesp_feriado_22_08);
+
     // Sincronizar escolha de tema nas definições
     const themeRadios = document.querySelectorAll('input[name="app-theme"]');
     let currentMode = 'auto';
@@ -813,6 +1152,8 @@ function populateSettingsModal() {
   }
   const statusMsg = $('settings-status');
   if (statusMsg) statusMsg.hidden = true;
+  const vmerStatusMsg = $('vmer-settings-status');
+  if (vmerStatusMsg) vmerStatusMsg.hidden = true;
 }
 
 function readSettingsModal() {
@@ -846,6 +1187,32 @@ function readSettingsModal() {
   };
 }
 
+function readVmerSettingsModal() {
+  const getMult = (id, fallback) => {
+    const el = $(id);
+    if (!el || !el.value) return fallback;
+    const num = parseFloat(el.value.replace(',', '.'));
+    return isNaN(num) || num < 0 ? fallback : Math.round(num * 100);
+  };
+  return {
+    baseRate: $('vmer-config-base-rate') ? $('vmer-config-base-rate').value.trim() : '29,91',
+    mode: $('vmer-config-mode') ? $('vmer-config-mode').value : 'multipliers',
+    multipliers: {
+      util_08_15: getMult('vmer-m-util-08-15', 700),
+      util_15_22: getMult('vmer-m-util-15-22', 800),
+      util_22_08: getMult('vmer-m-util-22-08', 1500),
+      vesp_feriado_22_08: getMult('vmer-m-vesp-22-08', 1900),
+      sab_08_15: getMult('vmer-m-sab-08-15', 800),
+      sab_15_22: getMult('vmer-m-sab-15-22', 1150),
+      sab_22_08: getMult('vmer-m-sab-22-08', 2000),
+      dom_08_15: getMult('vmer-m-dom-08-15', 1050),
+      dom_15_22: getMult('vmer-m-dom-15-22', 1150),
+      dom_22_08: getMult('vmer-m-dom-22-08', 1600),
+      dom_vesp_feriado_22_08: getMult('vmer-m-dom-vesp-22-08', 2000),
+    }
+  };
+}
+
 function updateCloudStatusBadge() {
   const badge = $('cloud-badge');
   if (!badge) return;
@@ -867,7 +1234,52 @@ const dialogSettings = $('settings-dialog');
 const closeSettings = $('close-settings');
 const btnResetCoeffs = $('btn-reset-coefficients');
 const btnSaveSettings = $('btn-save-settings');
+const btnResetVmer = $('btn-reset-vmer-table');
+const btnSaveVmer = $('btn-save-vmer-settings');
+const vmerModeSelect = $('vmer-config-mode');
 const btnSaveSupabase = $('btn-save-supabase-config');
+
+if (vmerModeSelect) {
+  vmerModeSelect.addEventListener('change', () => {
+    if ($('vmer-table-box')) {
+      $('vmer-table-box').hidden = vmerModeSelect.value === 'hourly';
+    }
+  });
+}
+
+if (btnResetVmer) {
+  btnResetVmer.onclick = () => {
+    saveActiveVmerConfig(DEFAULT_VMER_CONFIG);
+    populateSettingsModal();
+    const statusMsg = $('vmer-settings-status');
+    if (statusMsg) {
+      statusMsg.textContent = 'Valores e multiplicadores VMER repostos para a tabela padrão.';
+      statusMsg.hidden = false;
+    }
+    if (getActiveProfile() === 'vmer') {
+      if ($('rate')) $('rate').value = DEFAULT_VMER_CONFIG.baseRate;
+      if ($('results') && !$('results').hidden) calculate();
+      if (rosterShifts.length > 0) calculateRoster();
+    }
+  };
+}
+
+if (btnSaveVmer) {
+  btnSaveVmer.onclick = () => {
+    const updated = readVmerSettingsModal();
+    saveActiveVmerConfig(updated);
+    const statusMsg = $('vmer-settings-status');
+    if (statusMsg) {
+      statusMsg.textContent = 'Configurações de remuneração VMER guardadas com sucesso.';
+      statusMsg.hidden = false;
+    }
+    if (getActiveProfile() === 'vmer') {
+      if (updated.baseRate && $('rate')) $('rate').value = updated.baseRate;
+      if ($('results') && !$('results').hidden) calculate();
+      if (rosterShifts.length > 0) calculateRoster();
+    }
+  };
+}
 
 if (btnSettings && dialogSettings) {
   btnSettings.onclick = (e) => {

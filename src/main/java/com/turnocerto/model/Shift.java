@@ -12,15 +12,22 @@ public class Shift {
     private String extraStart;
     /** R para o regime normal em regime misto, em cêntimos (opcional, <= 0 usa rateCents). */
     private Long normalRateCents;
+    /** Tipo de perfil: "hospital" ou "vmer". */
+    private String profileType;
 
     public Shift() {}
 
     public Shift(String start, String end, String regime, String workType, long rateCents) {
-        this(start, end, regime, workType, rateCents, null, null);
+        this(start, end, regime, workType, rateCents, null, null, null);
     }
 
     public Shift(String start, String end, String regime, String workType, long rateCents,
                  String extraStart, Long normalRateCents) {
+        this(start, end, regime, workType, rateCents, extraStart, normalRateCents, null);
+    }
+
+    public Shift(String start, String end, String regime, String workType, long rateCents,
+                 String extraStart, Long normalRateCents, String profileType) {
         this.start = start;
         this.end = end;
         this.regime = regime;
@@ -28,6 +35,7 @@ public class Shift {
         this.rateCents = rateCents;
         this.extraStart = extraStart;
         this.normalRateCents = normalRateCents;
+        this.profileType = profileType;
     }
 
     public String getStart() { return start; }
@@ -50,4 +58,11 @@ public class Shift {
 
     public Long getNormalRateCents() { return normalRateCents; }
     public void setNormalRateCents(Long normalRateCents) { this.normalRateCents = normalRateCents; }
+
+    public String getProfileType() { return profileType; }
+    public void setProfileType(String profileType) { this.profileType = profileType; }
+
+    public boolean isVmer() {
+        return "vmer".equalsIgnoreCase(profileType) || (workType != null && workType.toUpperCase().contains("VMER"));
+    }
 }

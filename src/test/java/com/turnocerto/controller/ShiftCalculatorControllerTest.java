@@ -187,4 +187,128 @@ class ShiftCalculatorControllerTest {
                 .andExpect(jsonPath("$.payableCents", is(59000)))
                 .andExpect(jsonPath("$.totalMinutes", is(720)));
     }
+
+    @Test
+    @DisplayName("Calcula turno misto com rate base (14,52) e extraRate (16,33)")
+    void testCalculateShiftMistoComExtraRate() throws Exception {
+        String jsonPayload = """
+                {
+                    "workType": "Medicina Interna",
+                    "regime": "misto",
+                    "start": "2026-08-03T08:00",
+                    "end": "2026-08-04T08:00",
+                    "extraStart": "2026-08-03T20:00",
+                    "rate": "14,52",
+                    "extraRate": "16,33",
+                    "holidays": []
+                }
+                """;
+
+        // Período normal: 08:00-20:00 (12h) -> 12 * 0 * 14.52 = 0
+        // Período extra: 20:00-21:00 (1h) -> 1 * 1.75 * 16.33 = 28.5775 -> 28,58 € (2858 cêntimos)
+        // Período extra: 21:00-08:00 (11h) -> 11 * 2.00 * 16.33 = 359.26 € (35926 cêntimos)
+        // Total = 2858 + 35926 = 38784 cêntimos (387,84 €)
+        mockMvc.perform(post("/api/calculate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonPayload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payableCents", is(38784)))
+                .andExpect(jsonPath("$.segments[0].rateCents", is(1452)))
+                .andExpect(jsonPath("$.segments[1].rateCents", is(1633)))
+                .andExpect(jsonPath("$.segments[2].rateCents", is(1633)));
+    }
+
+    @Test
+    @DisplayName("Calcula turno VMER via POST /api/calculate")
+    void testCalculateVmerShiftEndpoint() throws Exception {
+        String jsonPayload = """
+                {
+                    "workType": "VMER",
+                    "profileType": "vmer",
+                    "regime": "vmer",
+                    "start": "2026-08-08T22:00",
+                    "end": "2026-08-09T08:00",
+                    "rate": "29,91",
+                    "holidays": []
+                }
+                """;
+
+        // Sábado 22:00 às 08:00 -> 20 R * 29,91 € = 598,20 € (59820 cêntimos)
+        mockMvc.perform(post("/api/calculate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonPayload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payableCents", is(59820)))
+                .andExpect(jsonPath("$.segments[0].payableCents", is(59820)))
+                .andExpect(jsonPath("$.segments[0].category", is("vmer-noturno")));
+    }
+
+    @Test
+    @DisplayName("Calcula folha mensal mista com turno SNS e turno VMER")
+    void testCalculateRosterComTurnoSnsEVmer() throws Exception {
+        String jsonPayload = """
+                {
+                    "shifts": [
+                        {
+                            "workType": "Anestesia",
+                            "regime": "extra",
+                            "start": "2026-08-03T20:00",
+                            "end": "2026-08-04T08:00",
+                            "rate": "20,00"
+                        },
+                        {
+                            "workType": "VMER",
+                            "profileType": "vmer",
+                            "regime": "vmer",
+                            "start": "2026-08-08T22:00",
+                            "end": "2026-08-09T08:00",
+                            "rate": "29,91"
+                        }
+                    ],
+                    "holidays": []
+                }
+                """;
+
+        // Anestesia: 475,00 € (47500 cêntimos)
+        // VMER Sábado: 598,20 € (59820 cêntimos)
+        // Total = 1073,20 € (107320 cêntimos)
+        mockMvc.perform(post("/api/calculate-roster")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonPayload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalShifts", is(2)))
+                .andExpect(jsonPath("$.payableCents", is(107320)));
+    }
+
+    @Test
+    @DisplayName("Calcula folha mensal com VMER e vmerConfig customizado")
+    void testCalculateRosterComVmerCustomConfig() throws Exception {
+        String jsonPayload = """
+                {
+                    "shifts": [
+                        {
+                            "workType": "VMER",
+                            "profileType": "vmer",
+                            "regime": "vmer",
+                            "start": "2026-08-08T08:00",
+                            "end": "2026-08-08T15:00",
+                            "rate": "30,00"
+                        }
+                    ],
+                    "holidays": [],
+                    "vmerConfig": {
+                        "baseRate": "30,00",
+                        "mode": "hourly"
+                    }
+                }
+                """;
+
+        // Modo hourly: 7h * 30,00 € = 210,00 € (21000 cêntimos)
+        mockMvc.perform(post("/api/calculate-roster")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonPayload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalShifts", is(1)))
+                .andExpect(jsonPath("$.payableCents", is(21000)));
+    }
 }

@@ -296,3 +296,43 @@
 [data-theme="dark"] .primary{background:linear-gradient(180deg,#18d3ab 0%,#10a886 100%);color:#04221a;border:1px solid #20e4b9;box-shadow:0 2px 6px rgba(0,0,0,.35),0 4px 18px rgba(20,184,147,.45),inset 0 1px 0 rgba(255,255,255,.3)}
 [data-theme="dark"] .primary:hover{background:linear-gradient(180deg,#24e3ba 0%,#13ba95 100%);box-shadow:0 4px 24px rgba(20,184,147,.6),inset 0 1px 0 rgba(255,255,255,.4)}
 
+/* --- Barra de Seleção de Perfil de Atividade --- */
+.profile-bar-card{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;background:var(--bg-card);border:1.5px solid var(--border);border-radius:var(--radius-lg);padding:12px 18px;margin-bottom:20px;box-shadow:var(--shadow-sm)}
+.profile-bar-label{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--color-title);text-transform:uppercase;letter-spacing:.5px}
+.profile-bar-label svg{color:var(--green)}
+.profile-chips{display:flex;flex-wrap:wrap;gap:8px}
+.profile-chip{background:var(--bg-card-alt);border:1.5px solid var(--border);color:var(--color-muted);border-radius:999px;padding:6px 14px;font-size:12.5px;font-weight:650;cursor:pointer;transition:all .18s ease;display:inline-flex;align-items:center;gap:6px}
+.profile-chip:hover{border-color:var(--green);color:var(--color-text)}
+.profile-chip.active{background:var(--green-light);border-color:var(--green);color:var(--green);font-weight:700;box-shadow:0 1px 4px rgba(11,121,101,.15)}
+[data-theme="dark"] .profile-chip.active{background:rgba(20,184,147,.18);color:var(--green);border-color:var(--green)}
+
+/* --- Header dos Modelos de Escala Habituais --- */
+.preset-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.preset-header .preset-title{margin-bottom:0}
+.preset-pill-wrap{display:inline-flex;align-items:center;position:relative}
+.preset-pill-wrap .preset-pill{padding-right:24px}
+.preset-pill-del{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;padding:2px 4px;font-size:10px;line-height:1;border-radius:4px}
+.preset-pill-del:hover{color:#b3261e;background:rgba(179,38,30,.12)}
+
+/* --- Configuração VMER no Modal de Definições --- */
+.vmer-section{border-top:1px solid var(--border);margin-top:24px;padding-top:20px}
+.vmer-settings-top{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:16px 0}
+@media(max-width:550px){.vmer-settings-top{grid-template-columns:1fr}}
+.vmer-base-field label, .vmer-mode-field label{display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--color-title)}
+.vmer-mode-field select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-input);color:var(--color-text);font-size:13px}
+.vmer-table-box{background:var(--bg-card-alt);border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;margin-bottom:16px}
+.vmer-table-title{display:block;font-size:12px;font-weight:700;color:var(--color-title);margin-bottom:10px}
+.vmer-edit-table{width:100%;border-collapse:collapse;font-size:12px}
+.vmer-edit-table th, .vmer-edit-table td{padding:8px 4px;text-align:center;border-bottom:1px solid var(--border)}
+.vmer-edit-table th:first-child, .vmer-edit-table td:first-child{text-align:left;padding-left:6px}
+.vmer-edit-table input[type="number"]{width:52px;padding:4px 4px;border:1px solid var(--border);border-radius:6px;text-align:right;font-size:12px;font-weight:600;background:var(--bg-input);color:var(--color-text)}
+.vmer-edit-table input[type="number"]:disabled{background:transparent;border-color:transparent;color:var(--muted);font-weight:normal}
+.table-footnote{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.4}
+
+/* --- Diálogo de Gestão de Modelos de Escala --- */
+.preset-times-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0}
+.checkbox-inline{display:flex;align-items:center;gap:8px;font-size:13px;margin:10px 0;cursor:pointer}
+.checkbox-inline input{width:16px;height:16px;accent-color:var(--green)}
+.dialog-actions-row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px}
+
+
