@@ -935,6 +935,7 @@ if (btnSaveSupabase) {
 
 // Modal de Autenticação Supabase
 const btnAuth = $('btn-auth');
+const authBtnLabel = $('auth-btn-label');
 const dialogAuth = $('auth-dialog');
 const closeAuth = $('close-auth');
 const authTabLogin = $('auth-tab-login');
@@ -957,10 +958,33 @@ const resetError = $('reset-error');
 const resetSuccess = $('reset-success');
 let authMode = 'login'; // 'login', 'signup', 'forgot', 'reset'
 
+function formatAuthErrorMessage(err) {
+  if (!err) return 'Ocorreu um erro no pedido.';
+  const msg = err.message || String(err);
+  if (/invalid login credentials/i.test(msg)) {
+    return 'Email ou palavra-passe incorretos. Se ainda não tem conta criada, selecione a aba "Criar Conta".';
+  }
+  if (/email not confirmed/i.test(msg)) {
+    return 'Endereço de email ainda não confirmado. Verifique a caixa de correio para validar a sua conta.';
+  }
+  if (/user already registered/i.test(msg)) {
+    return 'Já existe uma conta associada a este email. Selecione "Iniciar Sessão" ou recupere a palavra-passe.';
+  }
+  if (/password should be at least/i.test(msg)) {
+    return 'A palavra-passe deve conter pelo menos 6 caracteres.';
+  }
+  if (/unable to validate email/i.test(msg)) {
+    return 'Introduza um endereço de email válido.';
+  }
+  if (/rate limit/i.test(msg)) {
+    return 'Demasiadas tentativas consecutivas. Aguarde breves momentos antes de tentar novamente.';
+  }
+  return msg;
+}
+
 function updateAuthUI(user) {
   const loggedOutBox = $('auth-logged-out');
   const loggedInBox = $('auth-logged-in');
-  const authBtnLabel = $('auth-btn-label');
   const authUserEmail = $('auth-user-email');
 
   if (user) {
@@ -1007,7 +1031,9 @@ function showAuthView(view) {
 if (btnAuth && dialogAuth) {
   btnAuth.onclick = (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    if (!window.TurnoCertoAuth || !window.TurnoCertoAuth.getUser || !authBtnLabel || authBtnLabel.textContent === 'Entrar') {
+    const currentLabel = $('auth-btn-label');
+    const labelText = currentLabel ? currentLabel.textContent.trim() : '';
+    if (!window.TurnoCertoAuth || !window.TurnoCertoAuth.getUser || labelText === 'Entrar' || labelText === 'Conta') {
       showAuthView('login');
     }
     openModal(dialogAuth);
@@ -1040,22 +1066,44 @@ if (btnBackToLogin) {
 if (authForm) {
   authForm.onsubmit = async e => {
     e.preventDefault();
+    if (authError) authError.hidden = true;
+    if (authSuccess) authSuccess.hidden = true;
+
     if (!window.TurnoCertoAuth || !window.TurnoCertoAuth.isConfigured()) {
       if (authError) {
-        authError.textContent = 'Para utilizar a sincronização remota, configure o URL e a chave do projeto Supabase nas Definições.';
+        authError.textContent = 'O serviço de autenticação não se encontra disponível ou configurado.';
         authError.hidden = false;
       }
       return;
     }
 
-    const email = $('auth-email').value.trim();
-    const password = $('auth-password').value;
+    const emailEl = $('auth-email');
+    const passEl = $('auth-password');
+    const email = emailEl ? emailEl.value.trim() : '';
+    const password = passEl ? passEl.value : '';
+
+    if (!email) {
+      if (authError) {
+        authError.textContent = 'Por favor introduza o seu endereço de email.';
+        authError.hidden = false;
+      }
+      if (emailEl) emailEl.focus();
+      return;
+    }
+
+    if (!password) {
+      if (authError) {
+        authError.textContent = 'Por favor introduza a sua palavra-passe.';
+        authError.hidden = false;
+      }
+      if (passEl) passEl.focus();
+      return;
+    }
+
     if (btnAuthSubmit) {
       btnAuthSubmit.disabled = true;
       btnAuthSubmit.textContent = 'A processar…';
     }
-    if (authError) authError.hidden = true;
-    if (authSuccess) authSuccess.hidden = true;
 
     try {
       if (authMode === 'login') {
@@ -1086,13 +1134,13 @@ if (authForm) {
       }
     } catch (err) {
       if (authError) {
-        authError.textContent = err.message || 'Erro de autenticação.';
+        authError.textContent = formatAuthErrorMessage(err);
         authError.hidden = false;
       }
     } finally {
       if (btnAuthSubmit) {
         btnAuthSubmit.disabled = false;
-        btnAuthSubmit.textContent = authMode === 'login' ? 'Iniciar Sessão' : 'Criar Conta';
+        btnAuthSubmit.textContent = authMode === 'login' ? 'Entrar' : 'Criar Conta';
       }
     }
   };
@@ -1112,7 +1160,7 @@ if (forgotForm) {
 
     try {
       if (!window.TurnoCertoAuth || !window.TurnoCertoAuth.isConfigured()) {
-        throw new Error('Supabase não configurado. Introduza as credenciais nas Definições.');
+        throw new Error('Serviço de autenticação não configurado.');
       }
       await window.TurnoCertoAuth.resetPassword(email);
       if (forgotSuccess) {
@@ -1121,7 +1169,7 @@ if (forgotForm) {
       }
     } catch (err) {
       if (forgotError) {
-        forgotError.textContent = err.message || 'Erro ao enviar email de recuperação.';
+        forgotError.textContent = formatAuthErrorMessage(err);
         forgotError.hidden = false;
       }
     } finally {

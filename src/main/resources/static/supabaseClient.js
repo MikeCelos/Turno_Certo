@@ -12,9 +12,11 @@ let supabaseClient = null;
 
 function getSupabaseConfig() {
   try {
-    const url = localStorage.getItem(SUPABASE_STORAGE_URL_KEY) || DEFAULT_SUPABASE_URL || '';
-    const key = localStorage.getItem(SUPABASE_STORAGE_KEY_KEY) || DEFAULT_SUPABASE_ANON_KEY || '';
-    return { url: url.trim(), key: key.trim() };
+    let url = (localStorage.getItem(SUPABASE_STORAGE_URL_KEY) || '').trim();
+    let key = (localStorage.getItem(SUPABASE_STORAGE_KEY_KEY) || '').trim();
+    if (!url) url = DEFAULT_SUPABASE_URL || '';
+    if (!key) key = DEFAULT_SUPABASE_ANON_KEY || '';
+    return { url, key };
   } catch (_) {
     return { url: DEFAULT_SUPABASE_URL || '', key: DEFAULT_SUPABASE_ANON_KEY || '' };
   }
@@ -22,8 +24,8 @@ function getSupabaseConfig() {
 
 function saveSupabaseConfig(url, key) {
   try {
-    localStorage.setItem(SUPABASE_STORAGE_URL_KEY, url.trim());
-    localStorage.setItem(SUPABASE_STORAGE_KEY_KEY, key.trim());
+    localStorage.setItem(SUPABASE_STORAGE_URL_KEY, (url || '').trim());
+    localStorage.setItem(SUPABASE_STORAGE_KEY_KEY, (key || '').trim());
   } catch (_) {}
   initSupabaseClient();
 }
@@ -52,6 +54,7 @@ initSupabaseClient();
 
 window.TurnoCertoAuth = {
   isConfigured() {
+    if (!supabaseClient) initSupabaseClient();
     const { url, key } = getSupabaseConfig();
     return Boolean(url && key && supabaseClient);
   },
