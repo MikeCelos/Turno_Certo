@@ -2,6 +2,7 @@ package com.turnocerto.dto;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class CalculateRequest {
     private String workType;
@@ -15,6 +16,7 @@ public class CalculateRequest {
     private String extraStartOccurrence;
     private String normalRate;
     private List<String> holidays = new ArrayList<>();
+    private Map<String, CategoryRatesDto> customCoefficients;
 
     public CalculateRequest() {}
 
@@ -73,4 +75,7 @@ public class CalculateRequest {
 
     public List<String> getHolidays() { return holidays; }
     public void setHolidays(List<String> holidays) { this.holidays = holidays != null ? holidays : new ArrayList<>(); }
+
+    public Map<String, CategoryRatesDto> getCustomCoefficients() { return customCoefficients; }
+    public void setCustomCoefficients(Map<String, CategoryRatesDto> customCoefficients) { this.customCoefficients = customCoefficients; }
 }
