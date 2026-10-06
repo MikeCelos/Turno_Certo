@@ -337,6 +337,12 @@ function saveRoster() {
     localStorage.setItem(ROSTER_KEY, JSON.stringify(rosterShifts));
   } catch (_) {}
   updateRosterBadge();
+  if (window.TurnoCertoAuth && window.TurnoCertoAuth.isConfigured()) {
+    window.TurnoCertoAuth.syncUpload({
+      customCoefficients: getActiveCoefficients(),
+      roster: rosterShifts
+    }).catch(() => {});
+  }
 }
 
 function updateRosterBadge() {
@@ -966,6 +972,21 @@ if (authForm) {
       if (authMode === 'login') {
         const user = await window.TurnoCertoAuth.signIn(email, password);
         updateAuthUI(user);
+        // Tentar descarregar dados da nuvem se existirem
+        try {
+          const cloudData = await window.TurnoCertoAuth.syncDownload();
+          if (cloudData) {
+            if (cloudData.customCoefficients) {
+              saveActiveCoefficients(cloudData.customCoefficients);
+            }
+            if (Array.isArray(cloudData.roster) && cloudData.roster.length > 0) {
+              rosterShifts = cloudData.roster;
+              saveRoster();
+              updateRosterBadge();
+              calculateRoster();
+            }
+          }
+        } catch (_) {}
         if (dialogAuth) dialogAuth.close();
       } else {
         const user = await window.TurnoCertoAuth.signUp(email, password);
@@ -1025,7 +1046,23 @@ if (btnSyncNow) {
 
 // Inicializar estado de autenticação Supabase
 if (window.TurnoCertoAuth) {
-  window.TurnoCertoAuth.getUser().then(user => updateAuthUI(user));
+  window.TurnoCertoAuth.getUser().then(async user => {
+    updateAuthUI(user);
+    if (user) {
+      try {
+        const cloudData = await window.TurnoCertoAuth.syncDownload();
+        if (cloudData) {
+          if (cloudData.customCoefficients) saveActiveCoefficients(cloudData.customCoefficients);
+          if (Array.isArray(cloudData.roster) && cloudData.roster.length > 0 && rosterShifts.length === 0) {
+            rosterShifts = cloudData.roster;
+            saveRoster();
+            updateRosterBadge();
+            calculateRoster();
+          }
+        }
+      } catch (_) {}
+    }
+  });
   window.TurnoCertoAuth.onAuthStateChange((_, user) => updateAuthUI(user));
 }
 

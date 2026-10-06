@@ -258,3 +258,20 @@
 [data-theme="dark"] .logged-in-box{background:var(--green-light);border-color:#204b3e}
 [data-theme="dark"] .logged-in-box strong{color:var(--color-title)}
 
+.topbar-badge-optional{font-size:10px;color:var(--muted);background:rgba(0,0,0,0.06);padding:2px 6px;border-radius:10px;font-weight:500;margin-left:3px}
+[data-theme="dark"] .topbar-badge-optional{background:rgba(255,255,255,0.08);color:var(--color-muted)}
+
+.auth-optional-banner{display:flex;align-items:flex-start;gap:10px;background:#eef6f3;border:1px solid #b7dcce;border-radius:10px;padding:12px;margin-bottom:16px;font-size:13px;line-height:1.45;color:#18362d}
+.auth-optional-banner .banner-icon{font-size:18px;line-height:1}
+.auth-optional-banner p{margin:0}
+.auth-optional-banner strong{color:#096653}
+[data-theme="dark"] .auth-optional-banner{background:var(--green-light);border-color:#204b3e;color:var(--color-text)}
+[data-theme="dark"] .auth-optional-banner strong{color:var(--green)}
+
+.supabase-guide-details{margin-top:10px;font-size:12px;color:var(--muted)}
+.supabase-guide-details summary{font-weight:600;color:var(--green);cursor:pointer;margin-bottom:6px}
+.supabase-guide-details ol{margin:6px 0 0;padding-left:18px;line-height:1.6}
+.supabase-guide-details li{margin-bottom:4px}
+.supabase-guide-details a{color:var(--green);text-decoration:underline}
+
+
