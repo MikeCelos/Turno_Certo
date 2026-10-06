@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Turno Certo">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="/styles.css?v=0.6.5">
+  <link rel="stylesheet" href="/styles.css?v=0.6.6">
   <script>
     (function(){
       try {
@@ -25,8 +25,8 @@
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/supabaseClient.js?v=0.6.5" defer></script>
-  <script src="/app.js?v=0.6.5" defer></script>
+  <script src="/supabaseClient.js?v=0.6.6" defer></script>
+  <script src="/app.js?v=0.6.6" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -382,19 +382,21 @@
             </div>
             <button type="button" id="btn-save-supabase-config" class="secondary">Guardar Ligação Supabase</button>
             <details class="supabase-guide-details">
-              <summary>📖 Como ligar o Supabase e configurar o envio por flascocelos@gmail.com</summary>
+              <summary>📖 Como ligar o Supabase e enviar emails grátis via Brevo (flascocelos@gmail.com)</summary>
               <ol>
-                <li>Cria a tua conta em <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">supabase.com</a>.</li>
-                <li>Em <strong>Project Settings (⚙️) &rarr; API</strong>, copia o <strong>Project URL</strong> e a <strong>anon public key</strong> e cola acima.</li>
-                <li><strong>Para enviar os emails a partir de flascocelos@gmail.com:</strong>
+                <li>Cria a tua conta em <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">supabase.com</a> e cola o URL e a Chave acima.</li>
+                <li><strong>No Brevo (<a href="https://www.brevo.com" target="_blank" rel="noopener noreferrer">brevo.com</a>):</strong>
                   <ul>
-                    <li>Gera uma <em>Palavra-passe de aplicação</em> na tua Conta Google (16 caracteres).</li>
-                    <li>No Supabase em <strong>Authentication &rarr; SMTP Settings</strong>, preenche:
-                      <br>Host: <code>smtp.gmail.com</code> · Porta: <code>587</code>
-                      <br>User: <code>flascocelos@gmail.com</code> · Password: <code>[senha de aplicação]</code>
-                      <br>Sender email: <code>flascocelos@gmail.com</code> · Nome: <code>Turno Certo</code>
-                    </li>
-                    <li>Em <strong>Authentication &rarr; Email Templates</strong> podes personalizar o email de boas-vindas agradecendo o registo no Turno Certo.</li>
+                    <li>Cria uma conta gratuita (300 emails/dia).</li>
+                    <li>Em <em>Senders &amp; IPs &rarr; Senders</em>, adiciona <code>flascocelos@gmail.com</code> (nome: <code>Turno Certo</code>) e confirma no teu Gmail.</li>
+                    <li>No menu &rarr; <em>SMTP &amp; API</em> &rarr; aba <em>SMTP</em>, clica em <strong>Generate a new SMTP key</strong>.</li>
+                  </ul>
+                </li>
+                <li><strong>No Supabase (Authentication &rarr; SMTP Settings):</strong>
+                  <ul>
+                    <li>Host: <code>smtp-relay.brevo.com</code> · Porta: <code>587</code></li>
+                    <li>User: <code>[o teu login do Brevo]</code> · Password: <code>[chave SMTP gerada]</code></li>
+                    <li>Sender email: <code>flascocelos@gmail.com</code> · Sender name: <code>Turno Certo</code></li>
                   </ul>
                 </li>
               </ol>
