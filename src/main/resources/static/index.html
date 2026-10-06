@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Turno Certo">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="/styles.css?v=0.6.4">
+  <link rel="stylesheet" href="/styles.css?v=0.6.5">
   <script>
     (function(){
       try {
@@ -25,8 +25,8 @@
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/supabaseClient.js?v=0.6.4" defer></script>
-  <script src="/app.js?v=0.6.4" defer></script>
+  <script src="/supabaseClient.js?v=0.6.5" defer></script>
+  <script src="/app.js?v=0.6.5" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -382,13 +382,21 @@
             </div>
             <button type="button" id="btn-save-supabase-config" class="secondary">Guardar Ligação Supabase</button>
             <details class="supabase-guide-details">
-              <summary>📖 Como criar e ligar o teu projeto Supabase gratuito (passo a passo)</summary>
+              <summary>📖 Como ligar o Supabase e configurar o envio por flascocelos@gmail.com</summary>
               <ol>
-                <li>Cria uma conta gratuita em <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">supabase.com</a>.</li>
-                <li>Cria um novo projeto (ex.: <em>Turno Certo</em>).</li>
-                <li>No menu <strong>Project Settings</strong> (ícone ⚙️) &rarr; <strong>API</strong>, copia o <strong>Project URL</strong> e a <strong>anon public key</strong>.</li>
-                <li>Cola o URL e a Chave aqui em cima e clica em Guardar.</li>
-                <li>Pronto! Podes criar conta ou iniciar sessão para guardar as tuas configurações na nuvem.</li>
+                <li>Cria a tua conta em <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">supabase.com</a>.</li>
+                <li>Em <strong>Project Settings (⚙️) &rarr; API</strong>, copia o <strong>Project URL</strong> e a <strong>anon public key</strong> e cola acima.</li>
+                <li><strong>Para enviar os emails a partir de flascocelos@gmail.com:</strong>
+                  <ul>
+                    <li>Gera uma <em>Palavra-passe de aplicação</em> na tua Conta Google (16 caracteres).</li>
+                    <li>No Supabase em <strong>Authentication &rarr; SMTP Settings</strong>, preenche:
+                      <br>Host: <code>smtp.gmail.com</code> · Porta: <code>587</code>
+                      <br>User: <code>flascocelos@gmail.com</code> · Password: <code>[senha de aplicação]</code>
+                      <br>Sender email: <code>flascocelos@gmail.com</code> · Nome: <code>Turno Certo</code>
+                    </li>
+                    <li>Em <strong>Authentication &rarr; Email Templates</strong> podes personalizar o email de boas-vindas agradecendo o registo no Turno Certo.</li>
+                  </ul>
+                </li>
               </ol>
             </details>
           </div>
@@ -413,7 +421,7 @@
         <p><strong>O login é 100% opcional:</strong> podes calcular qualquer turno e folha mensal livremente sem login. A conta serve apenas para guardar e sincronizar as tuas configurações na nuvem entre o telemóvel e o PC.</p>
       </div>
 
-      <!-- Estado Quando Desconectado -->
+      <!-- Estado Quando Desconectado: Login / Criar Conta -->
       <div id="auth-logged-out">
         <div class="auth-tabs" role="tablist">
           <button type="button" id="auth-tab-login" class="auth-tab active" aria-selected="true">Iniciar Sessão</button>
@@ -427,10 +435,47 @@
           <label for="auth-password">Palavra-passe</label>
           <input type="password" id="auth-password" required minlength="6" placeholder="Mínimo 6 caracteres">
 
+          <div class="auth-aux-row">
+            <button type="button" id="btn-forgot-password" class="auth-aux-link">Esqueceste-te da palavra-passe?</button>
+          </div>
+
           <p id="auth-error" class="error" role="alert" hidden></p>
           <p id="auth-success" class="settings-status-msg" role="status" hidden></p>
 
           <button type="submit" id="btn-auth-submit" class="primary auth-submit-btn">Entrar</button>
+        </form>
+      </div>
+
+      <!-- Vista de Recuperação de Palavra-passe -->
+      <div id="auth-forgot-box" hidden>
+        <div class="auth-box-header">
+          <h4>Recuperar Palavra-passe</h4>
+          <p class="section-desc">Introduz o teu email para receberes um link seguro de recuperação enviado por <strong>flascocelos@gmail.com</strong>.</p>
+        </div>
+        <form id="forgot-form" class="auth-form">
+          <label for="forgot-email">Email da tua conta</label>
+          <input type="email" id="forgot-email" required placeholder="dr.exemplo@hospital.pt">
+          <p id="forgot-error" class="error" role="alert" hidden></p>
+          <p id="forgot-success" class="settings-status-msg" role="status" hidden></p>
+          <button type="submit" id="btn-forgot-submit" class="primary auth-submit-btn">Enviar Email de Recuperação</button>
+          <button type="button" id="btn-back-to-login" class="secondary" style="width:100%;margin-top:8px;">← Voltar a Iniciar Sessão</button>
+        </form>
+      </div>
+
+      <!-- Vista de Redefinição de Nova Palavra-passe -->
+      <div id="auth-reset-box" hidden>
+        <div class="auth-box-header">
+          <h4>Definir Nova Palavra-passe</h4>
+          <p class="section-desc">Cria uma nova palavra-passe para acederes à tua conta do Turno Certo.</p>
+        </div>
+        <form id="reset-password-form" class="auth-form">
+          <label for="reset-new-password">Nova Palavra-passe</label>
+          <input type="password" id="reset-new-password" required minlength="6" placeholder="Mínimo 6 caracteres">
+          <label for="reset-confirm-password">Confirmar Palavra-passe</label>
+          <input type="password" id="reset-confirm-password" required minlength="6" placeholder="Repete a nova palavra-passe">
+          <p id="reset-error" class="error" role="alert" hidden></p>
+          <p id="reset-success" class="settings-status-msg" role="status" hidden></p>
+          <button type="submit" id="btn-reset-submit" class="primary auth-submit-btn">Guardar Nova Palavra-passe</button>
         </form>
       </div>
 

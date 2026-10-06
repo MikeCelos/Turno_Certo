@@ -945,7 +945,17 @@ const authError = $('auth-error');
 const authSuccess = $('auth-success');
 const btnAuthSignout = $('btn-auth-signout');
 const btnSyncNow = $('btn-sync-now');
-let authMode = 'login'; // 'login' ou 'signup'
+const btnForgotPassword = $('btn-forgot-password');
+const btnBackToLogin = $('btn-back-to-login');
+const authForgotBox = $('auth-forgot-box');
+const authResetBox = $('auth-reset-box');
+const forgotForm = $('forgot-form');
+const resetPasswordForm = $('reset-password-form');
+const forgotError = $('forgot-error');
+const forgotSuccess = $('forgot-success');
+const resetError = $('reset-error');
+const resetSuccess = $('reset-success');
+let authMode = 'login'; // 'login', 'signup', 'forgot', 'reset'
 
 function updateAuthUI(user) {
   const loggedOutBox = $('auth-logged-out');
@@ -955,22 +965,51 @@ function updateAuthUI(user) {
 
   if (user) {
     if (loggedOutBox) loggedOutBox.hidden = true;
+    if (authForgotBox) authForgotBox.hidden = true;
+    if (authResetBox) authResetBox.hidden = true;
     if (loggedInBox) loggedInBox.hidden = false;
     const namePart = (user.email || 'Conta').split('@')[0];
     if (authBtnLabel) authBtnLabel.textContent = namePart;
     if (authUserEmail) authUserEmail.textContent = user.email || '';
   } else {
-    if (loggedOutBox) loggedOutBox.hidden = false;
     if (loggedInBox) loggedInBox.hidden = true;
+    showAuthView('login');
     if (authBtnLabel) authBtnLabel.textContent = 'Entrar';
   }
+}
+
+function showAuthView(view) {
+  const loggedOutBox = $('auth-logged-out');
+  if (loggedOutBox) loggedOutBox.hidden = (view === 'forgot' || view === 'reset');
+  if (authForgotBox) authForgotBox.hidden = (view !== 'forgot');
+  if (authResetBox) authResetBox.hidden = (view !== 'reset');
+
+  if (view === 'login') {
+    authMode = 'login';
+    if (authTabLogin) authTabLogin.classList.add('active');
+    if (authTabSignup) authTabSignup.classList.remove('active');
+    if (btnAuthSubmit) btnAuthSubmit.textContent = 'Entrar';
+  } else if (view === 'signup') {
+    authMode = 'signup';
+    if (authTabSignup) authTabSignup.classList.add('active');
+    if (authTabLogin) authTabLogin.classList.remove('active');
+    if (btnAuthSubmit) btnAuthSubmit.textContent = 'Criar Conta';
+  }
+
+  if (authError) authError.hidden = true;
+  if (authSuccess) authSuccess.hidden = true;
+  if (forgotError) forgotError.hidden = true;
+  if (forgotSuccess) forgotSuccess.hidden = true;
+  if (resetError) resetError.hidden = true;
+  if (resetSuccess) resetSuccess.hidden = true;
 }
 
 if (btnAuth && dialogAuth) {
   btnAuth.onclick = (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    if (authError) authError.hidden = true;
-    if (authSuccess) authSuccess.hidden = true;
+    if (!window.TurnoCertoAuth || !window.TurnoCertoAuth.getUser || !authBtnLabel || authBtnLabel.textContent === 'Entrar') {
+      showAuthView('login');
+    }
     openModal(dialogAuth);
   };
 }
@@ -986,23 +1025,16 @@ if (dialogAuth) {
 }
 
 if (authTabLogin && authTabSignup) {
-  authTabLogin.onclick = () => {
-    authMode = 'login';
-    authTabLogin.classList.add('active');
-    authTabSignup.classList.remove('active');
-    if (btnAuthSubmit) btnAuthSubmit.textContent = 'Entrar';
-    if (authError) authError.hidden = true;
-    if (authSuccess) authSuccess.hidden = true;
-  };
+  authTabLogin.onclick = () => showAuthView('login');
+  authTabSignup.onclick = () => showAuthView('signup');
+}
 
-  authTabSignup.onclick = () => {
-    authMode = 'signup';
-    authTabSignup.classList.add('active');
-    authTabLogin.classList.remove('active');
-    if (btnAuthSubmit) btnAuthSubmit.textContent = 'Criar Conta';
-    if (authError) authError.hidden = true;
-    if (authSuccess) authSuccess.hidden = true;
-  };
+if (btnForgotPassword) {
+  btnForgotPassword.onclick = () => showAuthView('forgot');
+}
+
+if (btnBackToLogin) {
+  btnBackToLogin.onclick = () => showAuthView('login');
 }
 
 if (authForm) {
@@ -1044,11 +1076,11 @@ if (authForm) {
             }
           }
         } catch (_) {}
-        if (dialogAuth) dialogAuth.close();
+        if (dialogAuth) closeModal(dialogAuth);
       } else {
         const user = await window.TurnoCertoAuth.signUp(email, password);
         if (authSuccess) {
-          authSuccess.textContent = '✓ Conta criada! Confirma o email ou inicia sessão.';
+          authSuccess.textContent = `✓ Conta criada! Muito obrigado por te juntares ao Turno Certo. Enviámos um email de agradecimento e confirmação para ${email} (remetente: flascocelos@gmail.com).`;
           authSuccess.hidden = false;
         }
       }
@@ -1061,6 +1093,91 @@ if (authForm) {
       if (btnAuthSubmit) {
         btnAuthSubmit.disabled = false;
         btnAuthSubmit.textContent = authMode === 'login' ? 'Entrar' : 'Criar Conta';
+      }
+    }
+  };
+}
+
+if (forgotForm) {
+  forgotForm.onsubmit = async e => {
+    e.preventDefault();
+    const email = $('forgot-email').value.trim();
+    const btnSubmit = $('btn-forgot-submit');
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'A enviar…';
+    }
+    if (forgotError) forgotError.hidden = true;
+    if (forgotSuccess) forgotSuccess.hidden = true;
+
+    try {
+      if (!window.TurnoCertoAuth || !window.TurnoCertoAuth.isConfigured()) {
+        throw new Error('Supabase não configurado. Adiciona as credenciais nas Definições ⚙️.');
+      }
+      await window.TurnoCertoAuth.resetPassword(email);
+      if (forgotSuccess) {
+        forgotSuccess.textContent = `✓ Enviámos um link seguro de recuperação para ${email}! O email será enviado a partir de flascocelos@gmail.com. Verifica também a tua pasta de spam.`;
+        forgotSuccess.hidden = false;
+      }
+    } catch (err) {
+      if (forgotError) {
+        forgotError.textContent = err.message || 'Erro ao enviar email de recuperação.';
+        forgotError.hidden = false;
+      }
+    } finally {
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Enviar Email de Recuperação';
+      }
+    }
+  };
+}
+
+if (resetPasswordForm) {
+  resetPasswordForm.onsubmit = async e => {
+    e.preventDefault();
+    const newPass = $('reset-new-password').value;
+    const confirmPass = $('reset-confirm-password').value;
+    const btnSubmit = $('btn-reset-submit');
+
+    if (newPass !== confirmPass) {
+      if (resetError) {
+        resetError.textContent = 'As palavras-passe não coincidem.';
+        resetError.hidden = false;
+      }
+      return;
+    }
+
+    if (btnSubmit) {
+      btnSubmit.disabled = true;
+      btnSubmit.textContent = 'A guardar…';
+    }
+    if (resetError) resetError.hidden = true;
+    if (resetSuccess) resetSuccess.hidden = true;
+
+    try {
+      if (!window.TurnoCertoAuth || !window.TurnoCertoAuth.isConfigured()) {
+        throw new Error('Supabase não configurado.');
+      }
+      await window.TurnoCertoAuth.updatePassword(newPass);
+      if (resetSuccess) {
+        resetSuccess.textContent = '✓ Palavra-passe atualizada com sucesso! A tua sessão foi iniciada.';
+        resetSuccess.hidden = false;
+      }
+      setTimeout(async () => {
+        const user = await window.TurnoCertoAuth.getUser();
+        updateAuthUI(user);
+        if (dialogAuth) closeModal(dialogAuth);
+      }, 1500);
+    } catch (err) {
+      if (resetError) {
+        resetError.textContent = err.message || 'Erro ao atualizar a palavra-passe.';
+        resetError.hidden = false;
+      }
+    } finally {
+      if (btnSubmit) {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Guardar Nova Palavra-passe';
       }
     }
   };
@@ -1120,7 +1237,20 @@ if (window.TurnoCertoAuth) {
       } catch (_) {}
     }
   });
-  window.TurnoCertoAuth.onAuthStateChange((_, user) => updateAuthUI(user));
+  window.TurnoCertoAuth.onAuthStateChange((event, user) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      showAuthView('reset');
+      if (dialogAuth) openModal(dialogAuth);
+    } else {
+      updateAuthUI(user);
+    }
+  });
+
+  // Deteção se o utilizador abriu o link de recuperação de password enviado por email
+  if (window.location.hash.includes('reset-password') || window.location.hash.includes('type=recovery')) {
+    showAuthView('reset');
+    if (dialogAuth) openModal(dialogAuth);
+  }
 }
 
 

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'turno-certo-v14';
+const CACHE_NAME = 'turno-certo-v15';
 const ASSETS = [
   '/',
   '/index.html',

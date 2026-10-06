@@ -104,6 +104,23 @@ window.TurnoCertoAuth = {
     }
   },
 
+  async resetPassword(email) {
+    const client = this.getClient();
+    if (!client) throw new Error('Configuração do Supabase não definida. Configura o URL e a Chave nas Definições.');
+    const redirectTo = window.location.origin + '/#reset-password';
+    const { data, error } = await client.auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) throw error;
+    return data;
+  },
+
+  async updatePassword(newPassword) {
+    const client = this.getClient();
+    if (!client) throw new Error('Configuração do Supabase não definida. Configura o URL e a Chave nas Definições.');
+    const { data, error } = await client.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+    return data.user;
+  },
+
   onAuthStateChange(callback) {
     const client = this.getClient();
     if (client && client.auth) {

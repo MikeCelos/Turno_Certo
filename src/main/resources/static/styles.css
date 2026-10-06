@@ -221,6 +221,12 @@
 .auth-tab.active{background:#ffffff;color:var(--green);font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.08)}
 .auth-form{display:flex;flex-direction:column;gap:10px}
 .auth-form label{margin:0;font-size:13px}
+.auth-aux-row{display:flex;justify-content:flex-end;margin-top:-4px;margin-bottom:2px}
+.auth-aux-link{background:none;border:none;padding:0;color:var(--green);font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.auth-aux-link:hover{color:#064e40}
+.auth-box-header{margin-bottom:14px}
+.auth-box-header h4{margin:0 0 4px;font-size:16px;font-weight:700}
+.auth-box-header .section-desc{margin:0;font-size:12px;color:var(--muted);line-height:1.4}
 .auth-submit-btn{margin-top:8px;padding:12px}
 .logged-in-box{display:flex;align-items:center;gap:14px;background:#f3f9f7;border:1px solid #c2e2d7;padding:14px;border-radius:12px;margin-bottom:16px}
 .user-avatar{font-size:32px}
