@@ -710,7 +710,7 @@ if ($('add-to-roster')) {
 
     const btn = $('add-to-roster');
     const origText = btn.textContent;
-    btn.textContent = '✓ Adicionado à Folha!';
+    btn.textContent = 'Adicionado à folha';
     btn.classList.add('btn-success');
     setTimeout(() => {
       btn.textContent = origText;
@@ -893,7 +893,7 @@ if (btnResetCoeffs) {
     populateSettingsModal();
     const statusMsg = $('settings-status');
     if (statusMsg) {
-      statusMsg.textContent = '✓ Multiplicadores restaurados para o padrão oficial do SNS!';
+      statusMsg.textContent = 'Coeficientes repostos de acordo com a tabela do SNS.';
       statusMsg.hidden = false;
     }
     // Recalcular se houver dados ativos
@@ -908,7 +908,7 @@ if (btnSaveSettings) {
     saveActiveCoefficients(updated);
     const statusMsg = $('settings-status');
     if (statusMsg) {
-      statusMsg.textContent = '✓ Multiplicadores personalizados guardados!';
+      statusMsg.textContent = 'Parâmetros atualizados com sucesso.';
       statusMsg.hidden = false;
     }
     // Sincronizar na nuvem se autenticado
@@ -1042,7 +1042,7 @@ if (authForm) {
     e.preventDefault();
     if (!window.TurnoCertoAuth || !window.TurnoCertoAuth.isConfigured()) {
       if (authError) {
-        authError.textContent = 'Para usar contas na nuvem, introduz o URL e a Chave do teu projeto Supabase nas Definições ⚙️.';
+        authError.textContent = 'Para utilizar a sincronização remota, configure o URL e a chave do projeto Supabase nas Definições.';
         authError.hidden = false;
       }
       return;
@@ -1080,7 +1080,7 @@ if (authForm) {
       } else {
         const user = await window.TurnoCertoAuth.signUp(email, password);
         if (authSuccess) {
-          authSuccess.textContent = `✓ Conta criada! Muito obrigado por te juntares ao Turno Certo. Enviámos um email de agradecimento e confirmação para ${email} (remetente: flascocelos@gmail.com).`;
+          authSuccess.textContent = `Registo concluído. Foi expedida uma mensagem de confirmação para ${email} (remetente: flascocelos@gmail.com).`;
           authSuccess.hidden = false;
         }
       }
@@ -1092,7 +1092,7 @@ if (authForm) {
     } finally {
       if (btnAuthSubmit) {
         btnAuthSubmit.disabled = false;
-        btnAuthSubmit.textContent = authMode === 'login' ? 'Entrar' : 'Criar Conta';
+        btnAuthSubmit.textContent = authMode === 'login' ? 'Iniciar Sessão' : 'Criar Conta';
       }
     }
   };
@@ -1105,18 +1105,18 @@ if (forgotForm) {
     const btnSubmit = $('btn-forgot-submit');
     if (btnSubmit) {
       btnSubmit.disabled = true;
-      btnSubmit.textContent = 'A enviar…';
+      btnSubmit.textContent = 'A processar…';
     }
     if (forgotError) forgotError.hidden = true;
     if (forgotSuccess) forgotSuccess.hidden = true;
 
     try {
       if (!window.TurnoCertoAuth || !window.TurnoCertoAuth.isConfigured()) {
-        throw new Error('Supabase não configurado. Adiciona as credenciais nas Definições ⚙️.');
+        throw new Error('Supabase não configurado. Introduza as credenciais nas Definições.');
       }
       await window.TurnoCertoAuth.resetPassword(email);
       if (forgotSuccess) {
-        forgotSuccess.textContent = `✓ Enviámos um link seguro de recuperação para ${email}! O email será enviado a partir de flascocelos@gmail.com. Verifica também a tua pasta de spam.`;
+        forgotSuccess.textContent = `Instruções de recuperação expedidas para ${email} através de flascocelos@gmail.com. Verifique também a pasta de spam.`;
         forgotSuccess.hidden = false;
       }
     } catch (err) {
@@ -1127,7 +1127,7 @@ if (forgotForm) {
     } finally {
       if (btnSubmit) {
         btnSubmit.disabled = false;
-        btnSubmit.textContent = 'Enviar Email de Recuperação';
+        btnSubmit.textContent = 'Submeter pedido de recuperação';
       }
     }
   };
@@ -1161,7 +1161,7 @@ if (resetPasswordForm) {
       }
       await window.TurnoCertoAuth.updatePassword(newPass);
       if (resetSuccess) {
-        resetSuccess.textContent = '✓ Palavra-passe atualizada com sucesso! A tua sessão foi iniciada.';
+        resetSuccess.textContent = 'Palavra-passe atualizada com sucesso. Sessão iniciada.';
         resetSuccess.hidden = false;
       }
       setTimeout(async () => {
@@ -1177,7 +1177,7 @@ if (resetPasswordForm) {
     } finally {
       if (btnSubmit) {
         btnSubmit.disabled = false;
-        btnSubmit.textContent = 'Guardar Nova Palavra-passe';
+        btnSubmit.textContent = 'Atualizar palavra-passe';
       }
     }
   };
@@ -1203,17 +1203,17 @@ if (btnSyncNow) {
           roster: rosterShifts
         });
         if (syncMsg) {
-          syncMsg.textContent = ok ? '✓ Escala e multiplicadores sincronizados com sucesso!' : 'Nota: Tabela cloud não configurada. Definições salvas localmente.';
+          syncMsg.textContent = ok ? 'Escala e parâmetros sincronizados com sucesso.' : 'Nota: Tabela cloud não configurada. Definições salvas localmente.';
           syncMsg.hidden = false;
         }
       }
     } catch (_) {
       if (syncMsg) {
-        syncMsg.textContent = 'Erro ao sincronizar com a nuvem.';
+        syncMsg.textContent = 'Erro ao sincronizar com o servidor.';
         syncMsg.hidden = false;
       }
     } finally {
-      if (btnSyncNow) btnSyncNow.textContent = '🔄 Sincronizar Agora';
+      if (btnSyncNow) btnSyncNow.textContent = 'Sincronizar agora';
     }
   };
 }

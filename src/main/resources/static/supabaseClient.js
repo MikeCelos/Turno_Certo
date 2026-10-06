@@ -1,7 +1,7 @@
 // Turno Certo · Cliente Supabase para Autenticação e Sincronização Cloud
 
 // DICA: Podes colar o URL e Chave do teu projeto Supabase aqui diretamente,
-// ou introduzi-los no painel de Definições ⚙️ da aplicação.
+// ou introduzi-los no painel de Definições da aplicação.
 const DEFAULT_SUPABASE_URL = 'https://xkzgzpffdzvubhdplvjo.supabase.co';
 const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_yRek61qxhB9dGU7FCVcarw_G0-EQ6Qi';
 

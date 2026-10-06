@@ -2,7 +2,7 @@
 <html lang="pt-PT">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Turno Certo · Calculadora de turnos</title>
+  <title>Turno Certo · Apuramento e Recibo Salarial SNS</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230d6656'/%3E%3Cpath d='M8 16l5 5 11-12' fill='none' stroke='white' stroke-width='3'/%3E%3C/svg%3E">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" id="meta-theme-color" content="#096653">
@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Turno Certo">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="/styles.css?v=0.6.6">
+  <link rel="stylesheet" href="/styles.css?v=0.6.7">
   <script>
     (function(){
       try {
@@ -25,102 +25,148 @@
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/supabaseClient.js?v=0.6.6" defer></script>
-  <script src="/app.js?v=0.6.6" defer></script>
+  <script src="/supabaseClient.js?v=0.6.7" defer></script>
+  <script src="/app.js?v=0.6.7" defer></script>
 </head>
 <body>
   <header class="topbar">
-    <a href="/" class="brand"><span class="mark" aria-hidden="true">✓</span>Turno<span>Certo</span></a>
+    <a href="/" class="brand">
+      <span class="mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </span>
+      Turno<span>Certo</span>
+    </a>
     <div class="topbar-right">
-      <button type="button" id="btn-settings" class="topbar-btn" aria-label="Definições e Multiplicadores" title="Definições e Multiplicadores"><span aria-hidden="true">⚙️</span> Definições</button>
-      <button type="button" id="btn-auth" class="topbar-btn auth-nav-btn" aria-label="Conta e Sincronização (Opcional)" title="Conta e Sincronização (Opcional)"><span aria-hidden="true">👤</span> <span id="auth-btn-label">Entrar</span> <small class="topbar-badge-optional">opcional</small></button>
-      <button type="button" id="btn-install" class="install-btn" hidden><span class="install-icon" aria-hidden="true">📲</span> Instalar App</button>
-      <span class="version">Calculadora <span>·</span> v0.6</span>
+      <button type="button" id="btn-settings" class="topbar-btn" aria-label="Definições e Coeficientes" title="Definições e Coeficientes">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+        Definições
+      </button>
+      <button type="button" id="btn-auth" class="topbar-btn auth-nav-btn" aria-label="Conta e Sincronização" title="Conta e Sincronização">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+        <span id="auth-btn-label">Conta</span> <small class="topbar-badge-optional">opcional</small>
+      </button>
+      <button type="button" id="btn-install" class="install-btn" hidden>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        Instalar Aplicação
+      </button>
+      <span class="version">Carreira Médica · SNS</span>
     </div>
   </header>
   <main>
-    <div class="page-heading"><div><p class="eyebrow">OS TEUS TURNOS, PARCELA A PARCELA</p><h1>Quanto vale este turno?</h1><p>Introduz o horário e vê o valor adicional esperado no recibo.</p></div><span class="timezone">Hora de Lisboa</span></div>
+    <div class="page-heading">
+      <div>
+        <p class="eyebrow">ENQUADRAMENTO LEGAL E ACTS · CARREIRA MÉDICA</p>
+        <h1>Cálculo de Suplementos e Trabalho Suplementar</h1>
+        <p>Apuramento discriminado de suplementos horários, períodos noturnos e regimes de trabalho.</p>
+      </div>
+      <span class="timezone">Hora Oficial de Lisboa</span>
+    </div>
     <div class="workspace">
       <section class="card input-card" aria-labelledby="form-title">
-        <div class="section-title"><h2 id="form-title">Dados do turno</h2><button type="button" id="example" class="text-button">Usar exemplo</button></div>
+        <div class="section-title">
+          <h2 id="form-title">Parâmetros do turno</h2>
+          <button type="button" id="example" class="text-button">Preencher exemplo</button>
+        </div>
         <form id="shift-form">
-          <label for="workType">Tipo de trabalho</label><input id="workType" name="workType" value="Anestesia" required maxlength="100">
-          <fieldset class="regime"><legend>Regime</legend><div class="segmented"><label><input type="radio" name="regime" value="normal"><span>Normal</span></label><label><input type="radio" name="regime" value="misto"><span>Misto</span></label><label><input type="radio" name="regime" value="extra" checked><span>Extraordinário</span></label></div></fieldset>
+          <label for="workType">Especialidade ou serviço</label>
+          <input id="workType" name="workType" value="Anestesiologia" required maxlength="100">
+          <fieldset class="regime">
+            <legend>Regime de trabalho</legend>
+            <div class="segmented">
+              <label><input type="radio" name="regime" value="normal"><span>Normal</span></label>
+              <label><input type="radio" name="regime" value="misto"><span>Misto</span></label>
+              <label><input type="radio" name="regime" value="extra" checked><span>Extraordinário</span></label>
+            </div>
+          </fieldset>
           <div class="preset-box">
-            <span class="preset-title">Atalhos de turno:</span>
+            <span class="preset-title">Modelos de escala habituais:</span>
             <div class="preset-buttons">
-              <button type="button" class="preset-pill" data-hours="night">🌙 Noite 12h (20h-08h)</button>
-              <button type="button" class="preset-pill" data-hours="day">☀️ Dia 12h (08h-20h)</button>
-              <button type="button" class="preset-pill" data-hours="24h-mixed">🏥 24h Misto (12h N + 12h E)</button>
-              <button type="button" class="preset-pill" data-hours="full">🏥 24h Extra (todo extra)</button>
+              <button type="button" class="preset-pill" data-hours="night">Noite 12h (20:00–08:00)</button>
+              <button type="button" class="preset-pill" data-hours="day">Dia 12h (08:00–20:00)</button>
+              <button type="button" class="preset-pill" data-hours="24h-mixed">24h Misto (12h Normal + 12h Extra)</button>
+              <button type="button" class="preset-pill" data-hours="full">24h Trabalho Suplementar</button>
             </div>
           </div>
-          <label for="start">Entrada</label><input type="datetime-local" id="start" name="start" required step="60" value="2026-08-03T19:30">
-          <label for="end">Saída</label><input type="datetime-local" id="end" name="end" required step="60" value="2026-08-03T21:30">
+          <label for="start">Horário de entrada</label>
+          <input type="datetime-local" id="start" name="start" required step="60" value="2026-08-03T19:30">
+          <label for="end">Horário de saída</label>
+          <input type="datetime-local" id="end" name="end" required step="60" value="2026-08-03T21:30">
           <div id="mixed-config" class="mixed-config" hidden>
             <div class="mixed-title">
-              <strong>⚖️ Configuração do Turno Misto</strong>
+              <strong>Parâmetros do Turno Misto</strong>
             </div>
-            <label for="extraStart">Início das horas extra</label>
+            <label for="extraStart">Início do período extraordinário</label>
             <input type="datetime-local" id="extraStart" name="extraStart" step="60">
-            <p class="mixed-help">Até a esta hora o turno é normal (apenas suplementos); a partir daqui é extraordinário (1.ª hora a 1,75 R e seguintes a 2 R).</p>
-            <label for="normalRate" class="optional-label">Valor-hora normal · R (opcional, se diferente)</label>
-            <div class="money-input"><input type="text" inputmode="decimal" id="normalRate" name="normalRate" placeholder="Igual ao R extra"><span>€/h</span></div>
+            <p class="mixed-help">Período normal: apenas suplemento de horário correspondente. Período extraordinário: remuneração integral com os coeficientes de trabalho suplementar aplicáveis.</p>
+            <label for="normalRate" class="optional-label">Valor-hora normal · R (opcional, se contratualmente distinto)</label>
+            <div class="money-input"><input type="text" inputmode="decimal" id="normalRate" name="normalRate" placeholder="Igual ao R do trabalho extraordinário"><span>€/h</span></div>
           </div>
           <div class="rate-row">
             <div>
               <div class="label-with-help">
-                <label for="rate">Valor-hora base · R</label>
-                <button type="button" id="rate-help-btn" class="help-btn" aria-label="Ajuda sobre o R" title="Qual R deves colocar?">?</button>
+                <label for="rate">Valor-hora base (R)</label>
+                <button type="button" id="rate-help-btn" class="help-btn" aria-label="Ajuda sobre o valor-hora base" title="Critério para o valor-hora base">?</button>
               </div>
               <div class="money-input"><input type="text" inputmode="decimal" id="rate" name="rate" required value="20,00"><span>€/h</span></div>
             </div>
-            <p>Usa o R aplicável a este tipo de trabalho.</p>
+            <p>Valor-hora base de referência para a remuneração.</p>
           </div>
           <div id="rate-help-box" class="help-box" hidden>
-            <strong>💡 Qual valor de R deves colocar aqui?</strong>
+            <strong>Critério de apuramento do valor-hora base (R)</strong>
             <ul>
-              <li><strong>Horas Extraordinárias:</strong> Coloca o valor-hora que surge nas linhas de trabalho suplementar do teu recibo (costuma ser mais alto, ex: 16,33 €, por somar outros suplementos).</li>
-              <li><strong>Regime Normal:</strong> Coloca o valor-hora base do teu contrato (ex: 14,52 €).</li>
+              <li><strong>Horas Extraordinárias:</strong> Indique o valor-hora que consta nas rubricas de trabalho suplementar do recibo de vencimento (frequentemente majorado face ao valor base simples).</li>
+              <li><strong>Regime Normal:</strong> Indique o valor-hora contratual direto da categoria e escalão (exemplo: 14,52 €/h).</li>
             </ul>
           </div>
-          <details class="settings"><summary>Feriados <span id="holiday-count">0 configurados</span></summary><p class="help">Adiciona os feriados aplicáveis ao turno, incluindo os municipais. Não são preenchidos automaticamente.</p><div class="holiday-controls"><input type="date" id="holiday-date" aria-label="Data do feriado"><button type="button" id="add-holiday" class="secondary">Adicionar</button></div><ul id="holiday-list"></ul><p id="holiday-error" class="field-error" role="status"></p></details>
-          <details class="settings"><summary>Mudança da hora</summary><p class="help">Se uma hora se repetir no regresso à hora de inverno, indica qual das duas ocorrências usaste.</p><label for="startOccurrence">Entrada</label><select id="startOccurrence" name="startOccurrence"><option value="">Automático</option><option value="first">Primeira ocorrência</option><option value="second">Segunda ocorrência</option></select><label for="endOccurrence">Saída</label><select id="endOccurrence" name="endOccurrence"><option value="">Automático</option><option value="first">Primeira ocorrência</option><option value="second">Segunda ocorrência</option></select></details>
+          <details class="settings"><summary>Feriados <span id="holiday-count">0 configurados</span></summary><p class="help">Adicione os feriados aplicáveis ao turno (nacionais e municipais). Não são calculados automaticamente.</p><div class="holiday-controls"><input type="date" id="holiday-date" aria-label="Data do feriado"><button type="button" id="add-holiday" class="secondary">Adicionar</button></div><ul id="holiday-list"></ul><p id="holiday-error" class="field-error" role="status"></p></details>
+          <details class="settings"><summary>Transição de horário de inverno</summary><p class="help">Na transição de hora de verão para inverno, selecione qual das duas ocorrências foi cumprida.</p><label for="startOccurrence">Entrada</label><select id="startOccurrence" name="startOccurrence"><option value="">Automático</option><option value="first">Primeira ocorrência</option><option value="second">Segunda ocorrência</option></select><label for="endOccurrence">Saída</label><select id="endOccurrence" name="endOccurrence"><option value="">Automático</option><option value="first">Primeira ocorrência</option><option value="second">Segunda ocorrência</option></select></details>
           <p id="form-error" class="error" role="alert" hidden></p>
           <div class="form-actions">
             <button class="primary" type="submit" id="calculate">Calcular turno</button>
-            <button type="button" id="add-to-roster" class="btn-roster">➕ Adicionar à Folha do Mês</button>
+            <button type="button" id="add-to-roster" class="btn-roster">Adicionar à Folha Mensal</button>
           </div>
-          <p class="form-note">Todo o intervalo é remunerado. Os teus dados base ficam memorizados apenas no teu navegador.</p>
+          <p class="form-note">Os dados introduzidos permanecem no seu navegador e não são partilhados sem autorização.</p>
         </form>
       </section>
       <section class="result-column" aria-label="Resultado do cálculo" aria-live="polite">
         <div class="view-switch" role="tablist" aria-label="Modo de visualização">
-          <button type="button" role="tab" id="tab-single" class="view-tab active" aria-selected="true" aria-controls="single-view">🕒 Turno Individual</button>
-          <button type="button" role="tab" id="tab-roster" class="view-tab" aria-selected="false" aria-controls="roster-view">📋 Folha Mensal <span id="roster-badge" class="roster-badge" hidden>0</span></button>
+          <button type="button" role="tab" id="tab-single" class="view-tab active" aria-selected="true" aria-controls="single-view">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            Turno Individual
+          </button>
+          <button type="button" role="tab" id="tab-roster" class="view-tab" aria-selected="false" aria-controls="roster-view">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            Folha Mensal <span id="roster-badge" class="roster-badge" hidden>0</span>
+          </button>
         </div>
 
         <div id="single-view">
-          <div id="result-state" class="result-state">Exemplo preenchido · R fictício de 20 €/h</div>
+          <div id="result-state" class="result-state">Aguardando cálculo</div>
           <div id="results" hidden>
-            <section class="total-card"><div class="total-top"><span>ADICIONAL ESPERADO</span><span id="regime-badge" class="badge"></span></div><div id="total" class="total"></div><p id="total-description"></p><div class="total-meta"><div><span>Duração</span><strong id="duration"></strong></div><div><span>Valor-hora base</span><strong id="base-rate"></strong></div><div><span>Parcelas</span><strong id="segment-count"></strong></div></div></section>
-            <section class="card breakdown"><div class="section-title"><h2>Como chegámos a este valor</h2><span class="small-label">Valores brutos</span></div><div id="timeline" class="timeline" aria-label="Distribuição temporal do turno"></div><div class="table-scroll"><table><thead><tr><th>Intervalo / categoria</th><th>Duração</th><th>Cálculo a pagar</th><th>Valor</th></tr></thead><tbody id="segments"></tbody></table></div><p class="rounding">O total é arredondado após somar os valores exatos. Pode diferir da soma das parcelas apresentadas por alguns cêntimos.</p></section>
-            <section class="card payment"><div><p class="eyebrow">PREVISÃO DE PAGAMENTO</p><h2 id="payment-month"></h2><p id="payment-detail"></p></div><span class="payment-icon" aria-hidden="true">M+2</span></section>
-            <details class="rules"><summary>Regras usadas neste cálculo</summary><p>Perfil inicial do Turno Certo. A primeira hora extra não reinicia quando muda a categoria ou o dia. No regime normal, desconta-se o 1 R já incluído na remuneração base.</p><p>Os feriados são apenas os que adicionares. Duração real nas mudanças da hora, arredondamento e distribuição entre meses são opções provisórias a validar com o processamento do hospital.</p><div class="table-scroll"><table><thead><tr><th>Categoria</th><th>Normal</th><th>Extra · 1.ª h</th><th>Extra · seguintes</th></tr></thead><tbody><tr><td>Útil diurno</td><td>1 R</td><td>1,25 R</td><td>1,50 R</td></tr><tr><td>Útil noturno</td><td>1,50 R</td><td>1,75 R</td><td>2 R</td></tr><tr><td>Especial diurno</td><td>1,50 R</td><td>1,75 R</td><td>2 R</td></tr><tr><td>Especial noturno</td><td>2 R</td><td>2,25 R</td><td>2,50 R</td></tr></tbody></table></div></details>
+            <section class="total-card"><div class="total-top"><span>ADICIONAL BRUTO APURADO</span><span id="regime-badge" class="badge"></span></div><div id="total" class="total"></div><p id="total-description"></p><div class="total-meta"><div><span>Duração</span><strong id="duration"></strong></div><div><span>Valor-hora base</span><strong id="base-rate"></strong></div><div><span>Parcelas</span><strong id="segment-count"></strong></div></div></section>
+            <section class="card breakdown"><div class="section-title"><h2>Discriminação do apuramento</h2><span class="small-label">Valores brutos</span></div><div id="timeline" class="timeline" aria-label="Distribuição temporal do turno"></div><div class="table-scroll"><table><thead><tr><th>Intervalo / categoria</th><th>Duração</th><th>Cálculo aplicável</th><th>Valor</th></tr></thead><tbody id="segments"></tbody></table></div><p class="rounding">O total final é arredondado a partir dos valores exatos apurados. Pequenas divergências de cêntimos decorrem de arredondamentos legais.</p></section>
+            <section class="card payment"><div><p class="eyebrow">PREVISÃO DE LIQUIDAÇÃO EM RECIBO</p><h2 id="payment-month"></h2><p id="payment-detail"></p></div><span class="payment-icon" aria-hidden="true">M+2</span></section>
+            <details class="rules"><summary>Bases regulamentares do cálculo</summary><p>Regime geral da Carreira Médica no SNS. A primeira hora extraordinária mantém a contagem independentemente da transição de categorias ou de dia civil. No regime normal, deduz-se a remuneração base (1 R) já contemplada no vencimento fixo.</p><p>Os feriados devem ser indicados manualmente. Regras de arredondamento e processamento devem ser confirmadas com o Serviço de Gestão de Recursos Humanos da instituição.</p><div class="table-scroll"><table><thead><tr><th>Categoria</th><th>Normal</th><th>Extra · 1.ª hora</th><th>Extra · Seguintes</th></tr></thead><tbody><tr><td>Útil diurno</td><td>1,00 R</td><td>1,25 R</td><td>1,50 R</td></tr><tr><td>Útil noturno</td><td>1,50 R</td><td>1,75 R</td><td>2,00 R</td></tr><tr><td>Especial diurno</td><td>1,50 R</td><td>1,75 R</td><td>2,00 R</td></tr><tr><td>Especial noturno</td><td>2,00 R</td><td>2,25 R</td><td>2,50 R</td></tr></tbody></table></div></details>
           </div>
-          <div id="empty" class="empty card"><span aria-hidden="true">◷</span><h2>O teu turno, explicado.</h2><p>Preenche os dados e calcula para ver cada parcela.</p></div>
+          <div id="empty" class="empty card">
+            <div class="empty-icon-box" aria-hidden="true">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </div>
+            <h2>Nenhum turno calculado</h2>
+            <p>Introduza os horários e o valor-hora pretendidos e prima <strong>Calcular turno</strong> para obter a discriminação das parcelas horárias.</p>
+          </div>
         </div>
 
         <div id="roster-view" hidden>
-          <div id="roster-state" class="result-state">Folha mensal consolidada · formato de recibo</div>
+          <div id="roster-state" class="result-state">Folha mensal consolidada · formato institucional</div>
           <div id="roster-results" hidden>
-            <section class="total-card"><div class="total-top"><span>TOTAL MENSAL CONSOLIDADO</span><span id="roster-shifts-badge" class="badge">0 turnos</span></div><div id="roster-total" class="total">0,00 €</div><p id="roster-total-description">Valor bruto acumulado a receber no recibo de vencimento.</p><div class="total-meta"><div><span>Duração total</span><strong id="roster-duration">0 h</strong></div><div><span>Previsão de pagamento</span><strong id="roster-payment-month">-</strong></div><div><span>Turnos na folha</span><strong id="roster-count-stat">0</strong></div></div></section>
+            <section class="total-card"><div class="total-top"><span>TOTAL ACUMULADO DO MÊS</span><span id="roster-shifts-badge" class="badge">0 turnos</span></div><div id="roster-total" class="total">0,00 €</div><p id="roster-total-description">Valor bruto acumulado a liquidar nas rubricas de trabalho suplementar e noturno.</p><div class="total-meta"><div><span>Duração total</span><strong id="roster-duration">0 h</strong></div><div><span>Previsão de liquidação</span><strong id="roster-payment-month">-</strong></div><div><span>Total de turnos</span><strong id="roster-count-stat">0</strong></div></div></section>
 
             <section class="card breakdown">
               <div class="section-title">
                 <div>
-                  <h2>Extrato Consolidado do Recibo</h2>
-                  <p class="subtitle">Horas somadas e agrupadas por rubrica salarial exatamente como surgem no recibo do hospital.</p>
+                  <h2>Extrato Consolidado por Rubrica</h2>
+                  <p class="subtitle">Horas agregadas por categoria e suplemento remuneratório conforme apuramento do recibo hospitalar.</p>
                 </div>
                 <span class="small-label">Valores brutos</span>
               </div>
@@ -130,29 +176,31 @@
                     <tr>
                       <th>Rubrica / Categoria</th>
                       <th>Horas Totais</th>
-                      <th>Cálculo</th>
-                      <th>Total</th>
+                      <th>Coeficiente</th>
+                      <th>Total Bruto</th>
                     </tr>
                   </thead>
                   <tbody id="roster-categories"></tbody>
                 </table>
               </div>
-              <p class="rounding">A soma dos valores exatos pode diferir dos arredondamentos parcelares por alguns cêntimos.</p>
+              <p class="rounding">A soma das rubricas corresponde ao total exato antes de eventuais descontos fiscais e de segurança social.</p>
             </section>
 
             <section class="card roster-shifts-card">
               <div class="section-title">
-                <h2>Turnos incluídos nesta folha (<span id="roster-list-count">0</span>)</h2>
-                <button type="button" id="clear-roster" class="text-button danger-text">Limpar folha</button>
+                <h2>Escala de turnos registados (<span id="roster-list-count">0</span>)</h2>
+                <button type="button" id="clear-roster" class="text-button danger-text">Limpar registos</button>
               </div>
               <div id="roster-shift-list" class="roster-list"></div>
             </section>
           </div>
           <div id="roster-empty" class="empty card">
-            <span aria-hidden="true">📋</span>
-            <h2>A tua folha mensal está vazia</h2>
-            <p>Configura o turno no formulário à esquerda e clica em <strong>"Adicionar à Folha do Mês"</strong> para acumulares todos os turnos e obteres o extrato consolidado do recibo.</p>
-            <button type="button" id="load-roster-example" class="secondary" style="margin-top: 16px;">⚡ Carregar exemplo com 4 turnos</button>
+            <div class="empty-icon-box" aria-hidden="true">
+              <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            </div>
+            <h2>Folha mensal sem registos</h2>
+            <p>Configure cada turno no formulário e selecione <strong>Adicionar à Folha Mensal</strong> para consolidar o apuramento mensal das horas trabalhadas.</p>
+            <button type="button" id="load-roster-example" class="secondary" style="margin-top: 16px;">Carregar escala de exemplo (4 turnos)</button>
           </div>
         </div>
       </section>
@@ -162,20 +210,22 @@
         <!-- Coluna 1: Projeto & Autoria -->
         <div class="footer-col">
           <div class="footer-brand">
-            <span class="footer-mark" aria-hidden="true">✓</span>
+            <span class="footer-mark" aria-hidden="true">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </span>
             <span>Turno<span>Certo</span></span>
           </div>
           <p class="footer-desc">
-            Aplicação independente criada para desmistificar as parcelas de trabalho e recibos de vencimento médico.
+            Sistema independente de apuramento salarial e discriminação de suplementos para médicos e profissionais do Serviço Nacional de Saúde.
           </p>
           <div class="footer-team">
             <div class="team-member">
-              <span class="role-badge">Ideia &amp; Consultoria Médica</span>
+              <span class="role-badge">Consultoria Médica</span>
               <strong>Diogo Vasconcelos</strong>
-              <small>Anesthesiology Resident</small>
+              <small>Médico Interno de Formação Especializada</small>
             </div>
             <div class="team-member">
-              <span class="role-badge">Desenvolvimento</span>
+              <span class="role-badge">Engenharia de Software</span>
               <strong>Francisco Vasconcelos</strong>
               <small>Software Engineering</small>
             </div>
@@ -184,31 +234,32 @@
 
         <!-- Coluna 2: Referências & Legislação -->
         <div class="footer-col">
-          <h4>⚖️ Referências &amp; Legislação</h4>
+          <h4>Enquadramento Legal &amp; ACT</h4>
           <ul class="footer-links">
             <li>
               <span>Carreira Médica no SNS</span>
               <small>Decreto-Lei n.º 177/2009 e Acordos Coletivos de Trabalho (ACT) em vigor.</small>
             </li>
             <li>
-              <span>Trabalho Suplementar &amp; Turnos</span>
-              <small>Regime de remuneração de horas extraordinárias, trabalho noturno e dias especiais.</small>
+              <span>Trabalho Suplementar e Noturno</span>
+              <small>Regime de remuneração de horas extraordinárias, suplementos noturnos e descanso compensatório.</small>
             </li>
             <li>
-              <span>Aviso de Isenção</span>
-              <small>Ferramenta de apoio e conferência indicativa, sem vínculo oficial aos Recursos Humanos hospitalares.</small>
+              <span>Nota Informativa</span>
+              <small>Ferramenta de conferência técnica indicativa, sem substituição do apuramento dos Serviços de Recursos Humanos.</small>
             </li>
           </ul>
         </div>
 
         <!-- Coluna 3: Contacto & Feedback -->
         <div class="footer-col">
-          <h4>✉️ Contacto &amp; Feedback</h4>
+          <h4>Contacto Institucional</h4>
           <p class="footer-contact-text">
-            Tens uma escala específica, detetaste alguma divergência no teu hospital ou queres sugerir novidades?
+            Para questões de parametrização hospitalar, reporte de especificidades em ACT ou contacto técnico:
           </p>
-          <a href="mailto:franciscovasconcelossasilva@gmail.com?subject=Turno%20Certo%20-%20Contacto%20/%20Sugest%C3%A3o" class="contact-email-btn">
-            <span aria-hidden="true">✉️</span> franciscovasconcelossasilva@gmail.com
+          <a href="mailto:franciscovasconcelossasilva@gmail.com?subject=Turno%20Certo%20-%20Contacto%20Institucional" class="contact-email-btn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            <span>franciscovasconcelossasilva@gmail.com</span>
           </a>
           <div class="footer-social">
             <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" class="social-link" title="LinkedIn">
@@ -221,10 +272,10 @@
 
       <div class="footer-bottom">
         <div>
-          © 2026 Turno Certo · Criado por Francisco Vasconcelos &amp; Diogo Vasconcelos
+          © 2026 Turno Certo · Francisco Vasconcelos &amp; Diogo Vasconcelos
         </div>
         <div>
-          Versão v0.6 · Lisboa, Portugal
+          Versão 0.6.7 · Carreira Médica SNS
         </div>
       </div>
     </footer>
@@ -235,8 +286,8 @@
     <div class="dialog-card settings-card">
       <div class="dialog-header">
         <div>
-          <h3>⚙️ Definições &amp; Multiplicadores</h3>
-          <p class="dialog-subtitle">Personaliza as taxas e multiplicadores para o teu hospital ou acordo de serviço.</p>
+          <h3>Parâmetros de Remuneração</h3>
+          <p class="dialog-subtitle">Configuração de coeficientes remuneratórios e preferências da aplicação.</p>
         </div>
         <button type="button" id="close-settings" class="close-btn" aria-label="Fechar">✕</button>
       </div>
@@ -245,29 +296,28 @@
         <!-- Secção 0: Aparência e Modo Noturno -->
         <section class="settings-section theme-settings-section" style="margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--border);">
           <div class="section-badge-header">
-            <h4>Modo Noturno &amp; Aparência</h4>
+            <h4>Aparência Visual</h4>
           </div>
-          <p class="section-desc">Escolhe o teu tema preferido para trabalhar de dia ou durante os turnos da noite.</p>
+          <p class="section-desc">Selecione o esquema de contraste pretendido:</p>
           <div class="segmented theme-segmented" id="theme-segmented">
-            <label><input type="radio" name="app-theme" value="light"><span>☀️ Claro</span></label>
-            <label><input type="radio" name="app-theme" value="dark"><span>🌙 Noturno</span></label>
-            <label><input type="radio" name="app-theme" value="auto"><span>⚙️ Sistema</span></label>
+            <label><input type="radio" name="app-theme" value="light"><span>Claro</span></label>
+            <label><input type="radio" name="app-theme" value="dark"><span>Escuro</span></label>
+            <label><input type="radio" name="app-theme" value="auto"><span>Automático</span></label>
           </div>
         </section>
 
         <!-- Secção 1: Multiplicadores por Categoria -->
         <section class="settings-section">
           <div class="section-badge-header">
-            <h4>Multiplicadores de Remuneração (Taxas R)</h4>
-            <span class="badge-tag">Personalizável</span>
+            <h4>Coeficientes de Trabalho Suplementar (Regime R)</h4>
+            <span class="badge-tag">Tabela Base ACT</span>
           </div>
-          <p class="section-desc">Indica o coeficiente aplicado ao teu valor-hora base (R) em cada situação:</p>
+          <p class="section-desc">Coeficientes multiplicadores aplicados sobre a remuneração horária base (R):</p>
 
           <div class="multipliers-grid">
             <!-- 1. Dia Útil (Diurno) -->
             <div class="multiplier-card">
               <div class="multiplier-header">
-                <span class="mult-icon">☀️</span>
                 <strong>Dia Útil (Diurno)</strong>
                 <small>Segunda a Sexta · 08:00 às 20:00</small>
               </div>
@@ -290,8 +340,7 @@
             <!-- 2. Noite Útil -->
             <div class="multiplier-card">
               <div class="multiplier-header">
-                <span class="mult-icon">🌙</span>
-                <strong>Noite Útil ("Depois das 20h")</strong>
+                <strong>Período Noturno em Dia Útil</strong>
                 <small>Segunda a Sexta · 20:00 às 08:00</small>
               </div>
               <div class="multiplier-fields">
@@ -313,9 +362,8 @@
             <!-- 3. Fim de Semana / Feriado (Diurno) -->
             <div class="multiplier-card">
               <div class="multiplier-header">
-                <span class="mult-icon">🏖️</span>
-                <strong>Fim de Semana &amp; Feriado (Diurno)</strong>
-                <small>Sáb 13h-20h · Dom/Fer 08h-20h</small>
+                <strong>Descanso Semanal e Feriado (Diurno)</strong>
+                <small>Sáb 13:00–20:00 · Dom/Feriado 08:00–20:00</small>
               </div>
               <div class="multiplier-fields">
                 <div class="mult-field">
@@ -336,8 +384,7 @@
             <!-- 4. Fim de Semana / Feriado (Noturno) -->
             <div class="multiplier-card">
               <div class="multiplier-header">
-                <span class="mult-icon">🎆</span>
-                <strong>Fim de Semana &amp; Feriado (Noturno)</strong>
+                <strong>Descanso Semanal e Feriado (Noturno)</strong>
                 <small>Sáb, Dom e Feriados · 20:00 às 08:00</small>
               </div>
               <div class="multiplier-fields">
@@ -358,8 +405,8 @@
           </div>
 
           <div class="settings-actions">
-            <button type="button" id="btn-reset-coefficients" class="secondary">↩️ Restaurar Padrão SNS</button>
-            <button type="button" id="btn-save-settings" class="primary">💾 Guardar Multiplicadores</button>
+            <button type="button" id="btn-reset-coefficients" class="secondary">Restabelecer coeficientes legais SNS</button>
+            <button type="button" id="btn-save-settings" class="primary">Guardar parâmetros</button>
           </div>
           <p id="settings-status" class="settings-status-msg" hidden></p>
         </section>
@@ -367,10 +414,10 @@
         <!-- Secção 2: Nuvem e Supabase -->
         <section class="settings-section cloud-section">
           <div class="section-badge-header">
-            <h4>⚡ Sincronização na Nuvem (Supabase) · Opcional</h4>
-            <span id="cloud-badge" class="badge-tag">Offline</span>
+            <h4>Sincronização Cloud (Supabase) · Opcional</h4>
+            <span id="cloud-badge" class="badge-tag">Armazenamento Local</span>
           </div>
-          <p class="section-desc">Permite guardar as tuas configurações e folha na nuvem para usares em vários dispositivos. Totalmente opcional (a app guarda localmente no teu dispositivo).</p>
+          <p class="section-desc">Permite sincronizar escalas e configurações entre múltiplos dispositivos de forma segura. Por omissão, todos os dados são mantidos exclusivamente em armazenamento local.</p>
           <div class="cloud-config-box">
             <div class="cloud-field">
               <label for="supabase-url">Supabase Project URL</label>
@@ -380,9 +427,9 @@
               <label for="supabase-key">Supabase Anon Key</label>
               <input type="password" id="supabase-key" placeholder="sb_publishable_anon_key...">
             </div>
-            <button type="button" id="btn-save-supabase-config" class="secondary">Guardar Ligação Supabase</button>
+            <button type="button" id="btn-save-supabase-config" class="secondary">Guardar credenciais Supabase</button>
             <details class="supabase-guide-details">
-              <summary>📖 Como ligar o Supabase e enviar emails grátis via Brevo (flascocelos@gmail.com)</summary>
+              <summary>Instruções de integração Supabase e servidor de email Brevo</summary>
               <ol>
                 <li>Cria a tua conta em <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">supabase.com</a> e cola o URL e a Chave acima.</li>
                 <li><strong>No Brevo (<a href="https://www.brevo.com" target="_blank" rel="noopener noreferrer">brevo.com</a>):</strong>
@@ -412,15 +459,17 @@
     <div class="dialog-card auth-card">
       <div class="dialog-header">
         <div>
-          <h3>👤 Conta &amp; Sincronização</h3>
-          <p class="dialog-subtitle">Guarda as tuas configurações e folha mensal na nuvem.</p>
+          <h3>Área de Utilizador &amp; Sincronização</h3>
+          <p class="dialog-subtitle">Gestão de perfil e persistência remota da escala de serviço.</p>
         </div>
         <button type="button" id="close-auth" class="close-btn" aria-label="Fechar">✕</button>
       </div>
 
       <div class="auth-optional-banner">
-        <span class="banner-icon" aria-hidden="true">💡</span>
-        <p><strong>O login é 100% opcional:</strong> podes calcular qualquer turno e folha mensal livremente sem login. A conta serve apenas para guardar e sincronizar as tuas configurações na nuvem entre o telemóvel e o PC.</p>
+        <span class="banner-icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+        </span>
+        <p><strong>Acesso independente de autenticação:</strong> todos os cálculos e folhas são plenamente funcionais sem conta. A autenticação destina-se unicamente à salvaguarda e sincronização remota entre equipamentos.</p>
       </div>
 
       <!-- Estado Quando Desconectado: Login / Criar Conta -->
@@ -438,13 +487,13 @@
           <input type="password" id="auth-password" required minlength="6" placeholder="Mínimo 6 caracteres">
 
           <div class="auth-aux-row">
-            <button type="button" id="btn-forgot-password" class="auth-aux-link">Esqueceste-te da palavra-passe?</button>
+            <button type="button" id="btn-forgot-password" class="auth-aux-link">Recuperar palavra-passe</button>
           </div>
 
           <p id="auth-error" class="error" role="alert" hidden></p>
           <p id="auth-success" class="settings-status-msg" role="status" hidden></p>
 
-          <button type="submit" id="btn-auth-submit" class="primary auth-submit-btn">Entrar</button>
+          <button type="submit" id="btn-auth-submit" class="primary auth-submit-btn">Iniciar Sessão</button>
         </form>
       </div>
 
@@ -452,15 +501,15 @@
       <div id="auth-forgot-box" hidden>
         <div class="auth-box-header">
           <h4>Recuperar Palavra-passe</h4>
-          <p class="section-desc">Introduz o teu email para receberes um link seguro de recuperação enviado por <strong>flascocelos@gmail.com</strong>.</p>
+          <p class="section-desc">Introduza o endereço de email registado para receber as instruções de recuperação emitidas por <strong>flascocelos@gmail.com</strong>.</p>
         </div>
         <form id="forgot-form" class="auth-form">
-          <label for="forgot-email">Email da tua conta</label>
+          <label for="forgot-email">Endereço de email</label>
           <input type="email" id="forgot-email" required placeholder="dr.exemplo@hospital.pt">
           <p id="forgot-error" class="error" role="alert" hidden></p>
           <p id="forgot-success" class="settings-status-msg" role="status" hidden></p>
-          <button type="submit" id="btn-forgot-submit" class="primary auth-submit-btn">Enviar Email de Recuperação</button>
-          <button type="button" id="btn-back-to-login" class="secondary" style="width:100%;margin-top:8px;">← Voltar a Iniciar Sessão</button>
+          <button type="submit" id="btn-forgot-submit" class="primary auth-submit-btn">Submeter pedido de recuperação</button>
+          <button type="button" id="btn-back-to-login" class="secondary" style="width:100%;margin-top:8px;">Voltar ao início de sessão</button>
         </form>
       </div>
 
@@ -468,7 +517,7 @@
       <div id="auth-reset-box" hidden>
         <div class="auth-box-header">
           <h4>Definir Nova Palavra-passe</h4>
-          <p class="section-desc">Cria uma nova palavra-passe para acederes à tua conta do Turno Certo.</p>
+          <p class="section-desc">Defina uma nova palavra-passe de acesso à sua conta.</p>
         </div>
         <form id="reset-password-form" class="auth-form">
           <label for="reset-new-password">Nova Palavra-passe</label>
@@ -477,23 +526,28 @@
           <input type="password" id="reset-confirm-password" required minlength="6" placeholder="Repete a nova palavra-passe">
           <p id="reset-error" class="error" role="alert" hidden></p>
           <p id="reset-success" class="settings-status-msg" role="status" hidden></p>
-          <button type="submit" id="btn-reset-submit" class="primary auth-submit-btn">Guardar Nova Palavra-passe</button>
+          <button type="submit" id="btn-reset-submit" class="primary auth-submit-btn">Atualizar palavra-passe</button>
         </form>
       </div>
 
       <!-- Estado Quando Conectado -->
       <div id="auth-logged-in" hidden>
         <div class="logged-in-box">
-          <div class="user-avatar" aria-hidden="true">🩺</div>
+          <div class="user-avatar" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          </div>
           <div class="user-info">
             <span class="user-title">Sessão iniciada como:</span>
             <strong id="auth-user-email">médico@hospital.pt</strong>
-            <span class="user-sync-status">✓ Sincronização cloud ativa</span>
+            <span class="user-sync-status">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;margin-right:3px;"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Sincronização remota ativa
+            </span>
           </div>
         </div>
 
         <div class="logged-in-actions">
-          <button type="button" id="btn-sync-now" class="primary">🔄 Sincronizar Agora</button>
+          <button type="button" id="btn-sync-now" class="primary">Sincronizar agora</button>
           <button type="button" id="btn-auth-signout" class="secondary danger-text">Terminar Sessão</button>
         </div>
         <p id="sync-status-msg" class="settings-status-msg" hidden></p>
@@ -504,20 +558,20 @@
   <dialog id="install-dialog" class="install-dialog">
     <div class="install-card">
       <div class="install-header">
-        <h3>Instalar Turno Certo</h3>
+        <h3>Instalar Aplicação</h3>
         <button type="button" id="close-install" class="close-btn" aria-label="Fechar">✕</button>
       </div>
       <div id="ios-guide" class="install-guide" hidden>
-        <p>Para instalar no teu <strong>iPhone ou iPad</strong>:</p>
+        <p>Para adicionar ao ecrã inicial no <strong>iOS (Safari)</strong>:</p>
         <ol>
-          <li>No Safari, toca no botão <strong>Partilhar</strong> ( <span class="action-icon">📤</span> ).</li>
-          <li>Desliza para baixo e seleciona <strong>"Adicionar ao Ecrã Principal"</strong> ( <span class="action-icon">⊞</span> ).</li>
-          <li>Toca em <strong>"Adicionar"</strong> no canto superior.</li>
+          <li>Toque no botão <strong>Partilhar</strong> (<span class="action-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg></span>).</li>
+          <li>Selecione a opção <strong>"Adicionar ao Ecrã Principal"</strong> (<span class="action-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg></span>).</li>
+          <li>Confirme tocando em <strong>"Adicionar"</strong> no canto superior direito.</li>
         </ol>
-        <p class="install-subtext">A aplicação ficará no teu ecrã inicial e abrirá em ecrã inteiro sem barras de navegador.</p>
+        <p class="install-subtext">A aplicação funcionará autonomamente em ecrã completo, com suporte offline.</p>
       </div>
       <div id="generic-guide" class="install-guide" hidden>
-        <p>Instala a aplicação no teu <strong>PC ou Android</strong> para acesso rápido e direto do teu ambiente de trabalho ou ecrã principal.</p>
+        <p>Instale a aplicação no dispositivo para obter acesso direto do ambiente de trabalho e suporte offline completo.</p>
         <button type="button" id="confirm-install-btn" class="primary">Instalar agora</button>
       </div>
     </div>

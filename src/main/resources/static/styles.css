@@ -229,7 +229,7 @@
 .auth-box-header .section-desc{margin:0;font-size:12px;color:var(--muted);line-height:1.4}
 .auth-submit-btn{margin-top:8px;padding:12px}
 .logged-in-box{display:flex;align-items:center;gap:14px;background:#f3f9f7;border:1px solid #c2e2d7;padding:14px;border-radius:12px;margin-bottom:16px}
-.user-avatar{font-size:32px}
+.user-avatar{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;background:#e2f0ea;color:var(--green);flex-shrink:0}
 .user-info{display:flex;flex-direction:column;gap:2px}
 .user-title{font-size:11px;text-transform:uppercase;color:var(--muted);font-weight:600}
 .user-info strong{font-size:14px;color:#172c35}
@@ -287,4 +287,12 @@
 
 
 
-[data-theme="dark"] .primary{background:linear-gradient(180deg,#18d3ab 0%,#10a886 100%);color:#04221a;border:1px solid #20e4b9;box-shadow:0 2px 6px rgba(0,0,0,.35),0 4px 18px rgba(20,184,147,.45),inset 0 1px 0 rgba(255,255,255,.3)}[data-theme="dark"] .primary:hover{background:linear-gradient(180deg,#24e3ba 0%,#13ba95 100%);box-shadow:0 4px 24px rgba(20,184,147,.6),inset 0 1px 0 rgba(255,255,255,.4)}
+.empty-icon-box{display:grid;place-items:center;width:58px;height:58px;border-radius:14px;background:#edf5f2;color:var(--green);margin:0 auto 16px;border:1px solid rgba(11,121,101,.12)}
+[data-theme="dark"] .empty-icon-box{background:rgba(46,196,166,.1);color:var(--green);border-color:rgba(46,196,166,.2)}
+[data-theme="dark"] .user-avatar{background:rgba(46,196,166,.18);color:var(--green)}
+.action-icon{display:inline-flex;align-items:center;justify-content:center;padding:2px 5px;background:#f0f4f6;border:1px solid #d0dce2;border-radius:6px;color:#1a3340;margin:0 2px;vertical-align:middle}
+[data-theme="dark"] .action-icon{background:#1a2a35;border-color:#2c4250;color:#dce7ec}
+
+[data-theme="dark"] .primary{background:linear-gradient(180deg,#18d3ab 0%,#10a886 100%);color:#04221a;border:1px solid #20e4b9;box-shadow:0 2px 6px rgba(0,0,0,.35),0 4px 18px rgba(20,184,147,.45),inset 0 1px 0 rgba(255,255,255,.3)}
+[data-theme="dark"] .primary:hover{background:linear-gradient(180deg,#24e3ba 0%,#13ba95 100%);box-shadow:0 4px 24px rgba(20,184,147,.6),inset 0 1px 0 rgba(255,255,255,.4)}
+
