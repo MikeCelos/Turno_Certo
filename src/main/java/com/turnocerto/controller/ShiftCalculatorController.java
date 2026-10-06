@@ -1,8 +1,10 @@
 package com.turnocerto.controller;
 
 import com.turnocerto.dto.CalculateRequest;
+import com.turnocerto.dto.CategoryRatesDto;
 import com.turnocerto.engine.LisbonTimeUtils;
 import com.turnocerto.engine.ShiftEngine;
+import com.turnocerto.model.CategoryRates;
 import com.turnocerto.model.Profile;
 import com.turnocerto.model.Shift;
 import com.turnocerto.model.ShiftCalculationResult;
@@ -12,9 +14,26 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api")
 public class ShiftCalculatorController {
+
+    private Map<String, CategoryRates> parseCustomRates(Map<String, CategoryRatesDto> dtos) {
+        if (dtos == null || dtos.isEmpty()) {
+            return null;
+        }
+        Map<String, CategoryRates> map = new HashMap<>();
+        for (Map.Entry<String, CategoryRatesDto> entry : dtos.entrySet()) {
+            CategoryRatesDto dto = entry.getValue();
+            if (dto != null && dto.getNormal() != null && dto.getFirstExtra() != null && dto.getNextExtra() != null) {
+                map.put(entry.getKey(), new CategoryRates(dto.getNormal(), dto.getFirstExtra(), dto.getNextExtra()));
+            }
+        }
+        return map;
+    }
 
     @PostMapping("/calculate")
     public ResponseEntity<ShiftCalculationResult> calculate(@RequestBody CalculateRequest request) {
@@ -40,7 +59,8 @@ public class ShiftCalculatorController {
         }
 
         Shift shift = new Shift(start, end, request.getRegime(), request.getWorkType(), rateCents, extraStart, normalRateCents);
-        Profile profile = Profile.initialProfile(request.getHolidays());
+        Map<String, CategoryRates> customRates = parseCustomRates(request.getCustomCoefficients());
+        Profile profile = Profile.profileWithCoefficients(request.getHolidays(), customRates);
 
         ShiftCalculationResult result = ShiftEngine.calculateShift(shift, profile);
         return ResponseEntity.ok(result);
@@ -77,7 +97,8 @@ public class ShiftCalculatorController {
             shifts.add(new Shift(start, end, item.getRegime(), item.getWorkType(), rateCents, extraStart, normalRateCents));
         }
 
-        Profile profile = Profile.initialProfile(request.getHolidays());
+        Map<String, CategoryRates> customRates = parseCustomRates(request.getCustomCoefficients());
+        Profile profile = Profile.profileWithCoefficients(request.getHolidays(), customRates);
         com.turnocerto.model.RosterCalculationResult result = ShiftEngine.calculateRoster(shifts, profile);
         return ResponseEntity.ok(result);
     }

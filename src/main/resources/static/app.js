@@ -83,7 +83,9 @@ async function calculate(isExample = false) {
   const currentRevision = revision;
   $('calculate').disabled = true; $('calculate').textContent = 'A calcular…'; $('form-error').hidden = true;
   try {
-    const input = Object.fromEntries(new FormData(form)); input.holidays = [...holidays];
+    const input = Object.fromEntries(new FormData(form));
+    input.holidays = [...holidays];
+    input.customCoefficients = getActiveCoefficients();
     const response = await fetch('/api/calculate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input) });
     const result = await response.json();
     if (revision !== currentRevision) return;
@@ -390,7 +392,8 @@ async function calculateRoster() {
         startOccurrence: s.startOccurrence || null,
         endOccurrence: s.endOccurrence || null
       })),
-      holidays: [...holidays]
+      holidays: [...holidays],
+      customCoefficients: getActiveCoefficients()
     };
     const response = await fetch('/api/calculate-roster', {
       method: 'POST',
@@ -683,4 +686,347 @@ if (window.matchMedia) {
     } catch (_) {}
   });
 }
+
+// ==========================================================
+// --- Gestão de Configurações, Multiplicadores & Supabase ---
+// ==========================================================
+
+const DEFAULT_COEFFICIENTS = {
+  'util-diurno': { normal: 100, firstExtra: 125, nextExtra: 150 },
+  'util-noturno': { normal: 150, firstExtra: 175, nextExtra: 200 },
+  'especial-diurno': { normal: 150, firstExtra: 175, nextExtra: 200 },
+  'especial-noturno': { normal: 200, firstExtra: 225, nextExtra: 250 },
+};
+const COEFFICIENTS_KEY = 'tc_custom_coefficients';
+
+function getActiveCoefficients() {
+  try {
+    const saved = localStorage.getItem(COEFFICIENTS_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        'util-diurno': { ...DEFAULT_COEFFICIENTS['util-diurno'], ...(parsed['util-diurno'] || {}) },
+        'util-noturno': { ...DEFAULT_COEFFICIENTS['util-noturno'], ...(parsed['util-noturno'] || {}) },
+        'especial-diurno': { ...DEFAULT_COEFFICIENTS['especial-diurno'], ...(parsed['especial-diurno'] || {}) },
+        'especial-noturno': { ...DEFAULT_COEFFICIENTS['especial-noturno'], ...(parsed['especial-noturno'] || {}) },
+      };
+    }
+  } catch (_) {}
+  return JSON.parse(JSON.stringify(DEFAULT_COEFFICIENTS));
+}
+
+function saveActiveCoefficients(coeffs) {
+  try {
+    localStorage.setItem(COEFFICIENTS_KEY, JSON.stringify(coeffs));
+  } catch (_) {}
+}
+
+function populateSettingsModal() {
+  const c = getActiveCoefficients();
+  const setVal = (id, val) => {
+    const el = $(id);
+    if (el) el.value = (val / 100).toFixed(2);
+  };
+  setVal('coeff-util-diurno-normal', c['util-diurno'].normal);
+  setVal('coeff-util-diurno-first', c['util-diurno'].firstExtra);
+  setVal('coeff-util-diurno-next', c['util-diurno'].nextExtra);
+
+  setVal('coeff-util-noturno-normal', c['util-noturno'].normal);
+  setVal('coeff-util-noturno-first', c['util-noturno'].firstExtra);
+  setVal('coeff-util-noturno-next', c['util-noturno'].nextExtra);
+
+  setVal('coeff-especial-diurno-normal', c['especial-diurno'].normal);
+  setVal('coeff-especial-diurno-first', c['especial-diurno'].firstExtra);
+  setVal('coeff-especial-diurno-next', c['especial-diurno'].nextExtra);
+
+  setVal('coeff-especial-noturno-normal', c['especial-noturno'].normal);
+  setVal('coeff-especial-noturno-first', c['especial-noturno'].firstExtra);
+  setVal('coeff-especial-noturno-next', c['especial-noturno'].nextExtra);
+
+  if (window.TurnoCertoAuth) {
+    const conf = window.TurnoCertoAuth.getConfig();
+    if ($('supabase-url')) $('supabase-url').value = conf.url || '';
+    if ($('supabase-key')) $('supabase-key').value = conf.key || '';
+    updateCloudStatusBadge();
+  }
+
+  const statusMsg = $('settings-status');
+  if (statusMsg) statusMsg.hidden = true;
+}
+
+function readSettingsModal() {
+  const getVal = (id, fallback) => {
+    const el = $(id);
+    if (!el || !el.value) return fallback;
+    const num = parseFloat(el.value.replace(',', '.'));
+    return isNaN(num) || num < 0 ? fallback : Math.round(num * 100);
+  };
+  return {
+    'util-diurno': {
+      normal: Math.max(100, getVal('coeff-util-diurno-normal', 100)),
+      firstExtra: getVal('coeff-util-diurno-first', 125),
+      nextExtra: getVal('coeff-util-diurno-next', 150),
+    },
+    'util-noturno': {
+      normal: Math.max(100, getVal('coeff-util-noturno-normal', 150)),
+      firstExtra: getVal('coeff-util-noturno-first', 175),
+      nextExtra: getVal('coeff-util-noturno-next', 200),
+    },
+    'especial-diurno': {
+      normal: Math.max(100, getVal('coeff-especial-diurno-normal', 150)),
+      firstExtra: getVal('coeff-especial-diurno-first', 175),
+      nextExtra: getVal('coeff-especial-diurno-next', 200),
+    },
+    'especial-noturno': {
+      normal: Math.max(100, getVal('coeff-especial-noturno-normal', 200)),
+      firstExtra: getVal('coeff-especial-noturno-first', 225),
+      nextExtra: getVal('coeff-especial-noturno-next', 250),
+    },
+  };
+}
+
+function updateCloudStatusBadge() {
+  const badge = $('cloud-badge');
+  if (!badge) return;
+  const isConfigured = window.TurnoCertoAuth && window.TurnoCertoAuth.isConfigured();
+  if (isConfigured) {
+    badge.textContent = 'Configurado';
+    badge.style.background = '#eef6f3';
+    badge.style.color = '#096653';
+  } else {
+    badge.textContent = 'Offline';
+    badge.style.background = '';
+    badge.style.color = '';
+  }
+}
+
+// Modal de Configurações
+const btnSettings = $('btn-settings');
+const dialogSettings = $('settings-dialog');
+const closeSettings = $('close-settings');
+const btnResetCoeffs = $('btn-reset-coefficients');
+const btnSaveSettings = $('btn-save-settings');
+const btnSaveSupabase = $('btn-save-supabase-config');
+
+if (btnSettings && dialogSettings) {
+  btnSettings.onclick = () => {
+    populateSettingsModal();
+    dialogSettings.showModal();
+  };
+}
+
+if (closeSettings && dialogSettings) {
+  closeSettings.onclick = () => dialogSettings.close();
+}
+
+if (dialogSettings) {
+  dialogSettings.onclick = e => {
+    if (e.target === dialogSettings) dialogSettings.close();
+  };
+}
+
+if (btnResetCoeffs) {
+  btnResetCoeffs.onclick = () => {
+    saveActiveCoefficients(DEFAULT_COEFFICIENTS);
+    populateSettingsModal();
+    const statusMsg = $('settings-status');
+    if (statusMsg) {
+      statusMsg.textContent = '✓ Multiplicadores restaurados para o padrão oficial do SNS!';
+      statusMsg.hidden = false;
+    }
+    // Recalcular se houver dados ativos
+    if ($('results') && !$('results').hidden) calculate();
+    if (rosterShifts.length > 0) calculateRoster();
+  };
+}
+
+if (btnSaveSettings) {
+  btnSaveSettings.onclick = () => {
+    const updated = readSettingsModal();
+    saveActiveCoefficients(updated);
+    const statusMsg = $('settings-status');
+    if (statusMsg) {
+      statusMsg.textContent = '✓ Multiplicadores personalizados guardados!';
+      statusMsg.hidden = false;
+    }
+    // Sincronizar na nuvem se autenticado
+    if (window.TurnoCertoAuth && window.TurnoCertoAuth.isConfigured()) {
+      window.TurnoCertoAuth.syncUpload({ customCoefficients: updated, roster: rosterShifts });
+    }
+    // Recalcular se houver dados ativos
+    if ($('results') && !$('results').hidden) calculate();
+    if (rosterShifts.length > 0) calculateRoster();
+  };
+}
+
+if (btnSaveSupabase) {
+  btnSaveSupabase.onclick = () => {
+    const url = $('supabase-url') ? $('supabase-url').value.trim() : '';
+    const key = $('supabase-key') ? $('supabase-key').value.trim() : '';
+    if (window.TurnoCertoAuth) {
+      window.TurnoCertoAuth.setConfig(url, key);
+      updateCloudStatusBadge();
+      alert(url && key ? 'Ligação ao Supabase configurada com sucesso!' : 'Configurações de Supabase limpas (modo offline).');
+    }
+  };
+}
+
+// Modal de Autenticação Supabase
+const btnAuth = $('btn-auth');
+const dialogAuth = $('auth-dialog');
+const closeAuth = $('close-auth');
+const authTabLogin = $('auth-tab-login');
+const authTabSignup = $('auth-tab-signup');
+const authForm = $('auth-form');
+const btnAuthSubmit = $('btn-auth-submit');
+const authError = $('auth-error');
+const authSuccess = $('auth-success');
+const btnAuthSignout = $('btn-auth-signout');
+const btnSyncNow = $('btn-sync-now');
+let authMode = 'login'; // 'login' ou 'signup'
+
+function updateAuthUI(user) {
+  const loggedOutBox = $('auth-logged-out');
+  const loggedInBox = $('auth-logged-in');
+  const authBtnLabel = $('auth-btn-label');
+  const authUserEmail = $('auth-user-email');
+
+  if (user) {
+    if (loggedOutBox) loggedOutBox.hidden = true;
+    if (loggedInBox) loggedInBox.hidden = false;
+    const namePart = (user.email || 'Conta').split('@')[0];
+    if (authBtnLabel) authBtnLabel.textContent = namePart;
+    if (authUserEmail) authUserEmail.textContent = user.email || '';
+  } else {
+    if (loggedOutBox) loggedOutBox.hidden = false;
+    if (loggedInBox) loggedInBox.hidden = true;
+    if (authBtnLabel) authBtnLabel.textContent = 'Entrar';
+  }
+}
+
+if (btnAuth && dialogAuth) {
+  btnAuth.onclick = () => {
+    if (authError) authError.hidden = true;
+    if (authSuccess) authSuccess.hidden = true;
+    dialogAuth.showModal();
+  };
+}
+
+if (closeAuth && dialogAuth) {
+  closeAuth.onclick = () => dialogAuth.close();
+}
+
+if (dialogAuth) {
+  dialogAuth.onclick = e => {
+    if (e.target === dialogAuth) dialogAuth.close();
+  };
+}
+
+if (authTabLogin && authTabSignup) {
+  authTabLogin.onclick = () => {
+    authMode = 'login';
+    authTabLogin.classList.add('active');
+    authTabSignup.classList.remove('active');
+    if (btnAuthSubmit) btnAuthSubmit.textContent = 'Entrar';
+    if (authError) authError.hidden = true;
+    if (authSuccess) authSuccess.hidden = true;
+  };
+
+  authTabSignup.onclick = () => {
+    authMode = 'signup';
+    authTabSignup.classList.add('active');
+    authTabLogin.classList.remove('active');
+    if (btnAuthSubmit) btnAuthSubmit.textContent = 'Criar Conta';
+    if (authError) authError.hidden = true;
+    if (authSuccess) authSuccess.hidden = true;
+  };
+}
+
+if (authForm) {
+  authForm.onsubmit = async e => {
+    e.preventDefault();
+    if (!window.TurnoCertoAuth || !window.TurnoCertoAuth.isConfigured()) {
+      if (authError) {
+        authError.textContent = 'Para usar contas na nuvem, introduz o URL e a Chave do teu projeto Supabase nas Definições ⚙️.';
+        authError.hidden = false;
+      }
+      return;
+    }
+
+    const email = $('auth-email').value.trim();
+    const password = $('auth-password').value;
+    if (btnAuthSubmit) {
+      btnAuthSubmit.disabled = true;
+      btnAuthSubmit.textContent = 'A processar…';
+    }
+    if (authError) authError.hidden = true;
+    if (authSuccess) authSuccess.hidden = true;
+
+    try {
+      if (authMode === 'login') {
+        const user = await window.TurnoCertoAuth.signIn(email, password);
+        updateAuthUI(user);
+        if (dialogAuth) dialogAuth.close();
+      } else {
+        const user = await window.TurnoCertoAuth.signUp(email, password);
+        if (authSuccess) {
+          authSuccess.textContent = '✓ Conta criada! Confirma o email ou inicia sessão.';
+          authSuccess.hidden = false;
+        }
+      }
+    } catch (err) {
+      if (authError) {
+        authError.textContent = err.message || 'Erro de autenticação.';
+        authError.hidden = false;
+      }
+    } finally {
+      if (btnAuthSubmit) {
+        btnAuthSubmit.disabled = false;
+        btnAuthSubmit.textContent = authMode === 'login' ? 'Entrar' : 'Criar Conta';
+      }
+    }
+  };
+}
+
+if (btnAuthSignout) {
+  btnAuthSignout.onclick = async () => {
+    if (window.TurnoCertoAuth) {
+      await window.TurnoCertoAuth.signOut();
+      updateAuthUI(null);
+    }
+  };
+}
+
+if (btnSyncNow) {
+  btnSyncNow.onclick = async () => {
+    const syncMsg = $('sync-status-msg');
+    if (btnSyncNow) btnSyncNow.textContent = 'A sincronizar…';
+    try {
+      if (window.TurnoCertoAuth) {
+        const ok = await window.TurnoCertoAuth.syncUpload({
+          customCoefficients: getActiveCoefficients(),
+          roster: rosterShifts
+        });
+        if (syncMsg) {
+          syncMsg.textContent = ok ? '✓ Escala e multiplicadores sincronizados com sucesso!' : 'Nota: Tabela cloud não configurada. Definições salvas localmente.';
+          syncMsg.hidden = false;
+        }
+      }
+    } catch (_) {
+      if (syncMsg) {
+        syncMsg.textContent = 'Erro ao sincronizar com a nuvem.';
+        syncMsg.hidden = false;
+      }
+    } finally {
+      if (btnSyncNow) btnSyncNow.textContent = '🔄 Sincronizar Agora';
+    }
+  };
+}
+
+// Inicializar estado de autenticação Supabase
+if (window.TurnoCertoAuth) {
+  window.TurnoCertoAuth.getUser().then(user => updateAuthUI(user));
+  window.TurnoCertoAuth.onAuthStateChange((_, user) => updateAuthUI(user));
+}
+
 

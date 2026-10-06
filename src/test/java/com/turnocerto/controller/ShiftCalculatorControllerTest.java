@@ -154,4 +154,37 @@ class ShiftCalculatorControllerTest {
                 .andExpect(jsonPath("$.categorySummaries", hasSize(greaterThanOrEqualTo(2))))
                 .andExpect(jsonPath("$.shifts", hasSize(2)));
     }
+
+    @Test
+    @DisplayName("Calcula turno com coeficientes/multiplicadores customizados")
+    void testCalculateShiftWithCustomCoefficients() throws Exception {
+        // Turno noturno das 20:00 às 08:00 (12h).
+        // Padrão SNS extra: 1h a 1.75 e 11h a 2.00 -> 1*1.75*20 + 11*2.00*20 = 35 + 440 = 475 € (47500 cêntimos).
+        // Com custom: firstExtra = 200 (2.00 R), nextExtra = 250 (2.50 R)
+        // -> 1*2.00*20 + 11*2.50*20 = 40 + 550 = 590 € (59000 cêntimos).
+        String jsonPayload = """
+                {
+                    "workType": "Anestesia",
+                    "regime": "extra",
+                    "start": "2026-08-03T20:00",
+                    "end": "2026-08-04T08:00",
+                    "rate": "20,00",
+                    "holidays": [],
+                    "customCoefficients": {
+                        "util-noturno": {
+                            "normal": 150,
+                            "firstExtra": 200,
+                            "nextExtra": 250
+                        }
+                    }
+                }
+                """;
+
+        mockMvc.perform(post("/api/calculate")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonPayload))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.payableCents", is(59000)))
+                .andExpect(jsonPath("$.totalMinutes", is(720)));
+    }
 }

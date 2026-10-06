@@ -24,15 +24,19 @@
       } catch(e){}
     })();
   </script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/supabaseClient.js" defer></script>
   <script src="/app.js" defer></script>
 </head>
 <body>
   <header class="topbar">
     <a href="/" class="brand"><span class="mark" aria-hidden="true">✓</span>Turno<span>Certo</span></a>
     <div class="topbar-right">
+      <button type="button" id="btn-settings" class="topbar-btn" aria-label="Definições e Multiplicadores" title="Definições e Multiplicadores"><span aria-hidden="true">⚙️</span> Definições</button>
+      <button type="button" id="btn-auth" class="topbar-btn auth-nav-btn" aria-label="Conta e Sincronização" title="Conta e Sincronização"><span aria-hidden="true">👤</span> <span id="auth-btn-label">Entrar</span></button>
       <button type="button" id="btn-theme" class="theme-toggle-btn" aria-label="Alternar modo escuro" title="Alternar modo escuro"><span id="theme-icon" aria-hidden="true">🌙</span></button>
       <button type="button" id="btn-install" class="install-btn" hidden><span class="install-icon" aria-hidden="true">📲</span> Instalar App</button>
-      <span class="version">Calculadora <span>·</span> v0.4</span>
+      <span class="version">Calculadora <span>·</span> v0.5</span>
     </div>
   </header>
   <main>
@@ -221,11 +225,207 @@
           © 2026 Turno Certo · Criado por Francisco Vasconcelos &amp; Dr. Diogo Vasconcelos
         </div>
         <div>
-          Versão v0.4 · Lisboa, Portugal
+          Versão v0.5 · Lisboa, Portugal
         </div>
       </div>
     </footer>
   </main>
+
+  <!-- Modal de Configurações & Multiplicadores -->
+  <dialog id="settings-dialog" class="app-dialog">
+    <div class="dialog-card settings-card">
+      <div class="dialog-header">
+        <div>
+          <h3>⚙️ Definições &amp; Multiplicadores</h3>
+          <p class="dialog-subtitle">Personaliza as taxas e multiplicadores para o teu hospital ou acordo de serviço.</p>
+        </div>
+        <button type="button" id="close-settings" class="close-btn" aria-label="Fechar">✕</button>
+      </div>
+
+      <div class="settings-content">
+        <!-- Secção 1: Multiplicadores por Categoria -->
+        <section class="settings-section">
+          <div class="section-badge-header">
+            <h4>📈 Multiplicadores de Remuneração (Taxas R)</h4>
+            <span class="badge-tag">Personalizável</span>
+          </div>
+          <p class="section-desc">Indica o coeficiente aplicado ao teu valor-hora base (R) em cada situação:</p>
+
+          <div class="multipliers-grid">
+            <!-- 1. Dia Útil (Diurno) -->
+            <div class="multiplier-card">
+              <div class="multiplier-header">
+                <span class="mult-icon">☀️</span>
+                <strong>Dia Útil (Diurno)</strong>
+                <small>Segunda a Sexta · 08:00 às 20:00</small>
+              </div>
+              <div class="multiplier-fields">
+                <div class="mult-field">
+                  <label for="coeff-util-diurno-normal">Normal (base)</label>
+                  <div class="mult-input"><input type="number" step="0.05" min="1.0" id="coeff-util-diurno-normal" value="1.00"><span>× R</span></div>
+                </div>
+                <div class="mult-field">
+                  <label for="coeff-util-diurno-first">Extra · 1.ª hora</label>
+                  <div class="mult-input"><input type="number" step="0.05" min="1.0" id="coeff-util-diurno-first" value="1.25"><span>× R</span></div>
+                </div>
+                <div class="mult-field">
+                  <label for="coeff-util-diurno-next">Extra · Seguintes</label>
+                  <div class="mult-input"><input type="number" step="0.05" min="1.0" id="coeff-util-diurno-next" value="1.50"><span>× R</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Noite Útil -->
+            <div class="multiplier-card">
+              <div class="multiplier-header">
+                <span class="mult-icon">🌙</span>
+                <strong>Noite Útil ("Depois das 20h")</strong>
+                <small>Segunda a Sexta · 20:00 às 08:00</small>
+              </div>
+              <div class="multiplier-fields">
+                <div class="mult-field">
+                  <label for="coeff-util-noturno-normal">Normal (+50%)</label>
+                  <div class="mult-input"><input type="number" step="0.05" min="1.0" id="coeff-util-noturno-normal" value="1.50"><span>× R</span></div>
+                </div>
+                <div class="mult-field">
+                  <label for="coeff-util-noturno-first">Extra · 1.ª hora</label>
+                  <div class="mult-input"><input type="number" step="0.05" min="1.0" id="coeff-util-noturno-first" value="1.75"><span>× R</span></div>
+                </div>
+                <div class="mult-field">
+                  <label for="coeff-util-noturno-next">Extra · Seguintes</label>
+                  <div class="mult-input"><input type="number" step="0.05" min="1.0" id="coeff-util-noturno-next" value="2.00"><span>× R</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Fim de Semana / Feriado (Diurno) -->
+            <div class="multiplier-card">
+              <div class="multiplier-header">
+                <span class="mult-icon">🏖️</span>
+                <strong>Fim de Semana &amp; Feriado (Diurno)</strong>
+                <small>Sáb 13h-20h · Dom/Fer 08h-20h</small>
+              </div>
+              <div class="multiplier-fields">
+                <div class="mult-field">
+                  <label for="coeff-especial-diurno-normal">Normal (+50%)</label>
+                  <div class="mult-input"><input type="number" step="0.05" min="1.0" id="coeff-especial-diurno-normal" value="1.50"><span>× R</span></div>
+                </div>
+                <div class="mult-field">
+                  <label for="coeff-especial-diurno-first">Extra · 1.ª hora</label>
+                  <div class="mult-input"><input type="number" step="0.05" min="1.0" id="coeff-especial-diurno-first" value="1.75"><span>× R</span></div>
+                </div>
+                <div class="mult-field">
+                  <label for="coeff-especial-diurno-next">Extra · Seguintes</label>
+                  <div class="mult-input"><input type="number" step="0.05" min="1.0" id="coeff-especial-diurno-next" value="2.00"><span>× R</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 4. Fim de Semana / Feriado (Noturno) -->
+            <div class="multiplier-card">
+              <div class="multiplier-header">
+                <span class="mult-icon">🎆</span>
+                <strong>Fim de Semana &amp; Feriado (Noturno)</strong>
+                <small>Sáb, Dom e Feriados · 20:00 às 08:00</small>
+              </div>
+              <div class="multiplier-fields">
+                <div class="mult-field">
+                  <label for="coeff-especial-noturno-normal">Normal (+100%)</label>
+                  <div class="mult-input"><input type="number" step="0.05" min="1.0" id="coeff-especial-noturno-normal" value="2.00"><span>× R</span></div>
+                </div>
+                <div class="mult-field">
+                  <label for="coeff-especial-noturno-first">Extra · 1.ª hora</label>
+                  <div class="mult-input"><input type="number" step="0.05" min="1.0" id="coeff-especial-noturno-first" value="2.25"><span>× R</span></div>
+                </div>
+                <div class="mult-field">
+                  <label for="coeff-especial-noturno-next">Extra · Seguintes</label>
+                  <div class="mult-input"><input type="number" step="0.05" min="1.0" id="coeff-especial-noturno-next" value="2.50"><span>× R</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-actions">
+            <button type="button" id="btn-reset-coefficients" class="secondary">↩️ Restaurar Padrão SNS</button>
+            <button type="button" id="btn-save-settings" class="primary">💾 Guardar Multiplicadores</button>
+          </div>
+          <p id="settings-status" class="settings-status-msg" hidden></p>
+        </section>
+
+        <!-- Secção 2: Nuvem e Supabase -->
+        <section class="settings-section cloud-section">
+          <div class="section-badge-header">
+            <h4>⚡ Sincronização na Nuvem (Supabase)</h4>
+            <span id="cloud-badge" class="badge-tag">Offline</span>
+          </div>
+          <p class="section-desc">Permite sincronizar os teus turnos e configurações entre o teu telemóvel e o teu computador com o teu projeto Supabase.</p>
+          <div class="cloud-config-box">
+            <div class="cloud-field">
+              <label for="supabase-url">Supabase Project URL</label>
+              <input type="url" id="supabase-url" placeholder="https://xyzproject.supabase.co">
+            </div>
+            <div class="cloud-field">
+              <label for="supabase-key">Supabase Anon Key</label>
+              <input type="password" id="supabase-key" placeholder="sb_publishable_anon_key...">
+            </div>
+            <button type="button" id="btn-save-supabase-config" class="secondary">Guardar Ligação Supabase</button>
+          </div>
+        </section>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Modal de Autenticação Supabase -->
+  <dialog id="auth-dialog" class="app-dialog">
+    <div class="dialog-card auth-card">
+      <div class="dialog-header">
+        <div>
+          <h3>👤 Conta &amp; Sincronização</h3>
+          <p class="dialog-subtitle">Inicia sessão para manteres os teus turnos guardados na nuvem.</p>
+        </div>
+        <button type="button" id="close-auth" class="close-btn" aria-label="Fechar">✕</button>
+      </div>
+
+      <!-- Estado Quando Desconectado -->
+      <div id="auth-logged-out">
+        <div class="auth-tabs" role="tablist">
+          <button type="button" id="auth-tab-login" class="auth-tab active" aria-selected="true">Iniciar Sessão</button>
+          <button type="button" id="auth-tab-signup" class="auth-tab" aria-selected="false">Criar Conta</button>
+        </div>
+
+        <form id="auth-form" class="auth-form">
+          <label for="auth-email">Email</label>
+          <input type="email" id="auth-email" required placeholder="dr.exemplo@hospital.pt">
+
+          <label for="auth-password">Palavra-passe</label>
+          <input type="password" id="auth-password" required minlength="6" placeholder="Mínimo 6 caracteres">
+
+          <p id="auth-error" class="error" role="alert" hidden></p>
+          <p id="auth-success" class="settings-status-msg" role="status" hidden></p>
+
+          <button type="submit" id="btn-auth-submit" class="primary auth-submit-btn">Entrar</button>
+        </form>
+      </div>
+
+      <!-- Estado Quando Conectado -->
+      <div id="auth-logged-in" hidden>
+        <div class="logged-in-box">
+          <div class="user-avatar" aria-hidden="true">🩺</div>
+          <div class="user-info">
+            <span class="user-title">Sessão iniciada como:</span>
+            <strong id="auth-user-email">médico@hospital.pt</strong>
+            <span class="user-sync-status">✓ Sincronização cloud ativa</span>
+          </div>
+        </div>
+
+        <div class="logged-in-actions">
+          <button type="button" id="btn-sync-now" class="primary">🔄 Sincronizar Agora</button>
+          <button type="button" id="btn-auth-signout" class="secondary danger-text">Terminar Sessão</button>
+        </div>
+        <p id="sync-status-msg" class="settings-status-msg" hidden></p>
+      </div>
+    </div>
+  </dialog>
 
   <dialog id="install-dialog" class="install-dialog">
     <div class="install-card">

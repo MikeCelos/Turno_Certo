@@ -1,9 +1,10 @@
-const CACHE_NAME = 'turno-certo-v6';
+const CACHE_NAME = 'turno-certo-v7';
 const ASSETS = [
   '/',
   '/index.html',
   '/styles.css',
   '/app.js',
+  '/supabaseClient.js',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',

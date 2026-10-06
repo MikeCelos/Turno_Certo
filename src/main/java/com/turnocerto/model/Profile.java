@@ -91,6 +91,14 @@ public class Profile {
         );
     }
 
+    public static Profile profileWithCoefficients(List<String> holidays, Map<String, CategoryRates> customCoefficients) {
+        Profile p = initialProfile(holidays);
+        if (customCoefficients != null && !customCoefficients.isEmpty()) {
+            p.getCoefficients().putAll(customCoefficients);
+        }
+        return p;
+    }
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
