@@ -243,6 +243,28 @@ window.addEventListener('beforeinstallprompt', e => {
   if (installBtn && !isStandalone) installBtn.hidden = false;
 });
 
+function openModal(dialog) {
+  if (!dialog) return;
+  if (typeof dialog.showModal === 'function') {
+    try {
+      dialog.showModal();
+      return;
+    } catch (_) {}
+  }
+  dialog.setAttribute('open', '');
+}
+
+function closeModal(dialog) {
+  if (!dialog) return;
+  if (typeof dialog.close === 'function') {
+    try {
+      dialog.close();
+      return;
+    } catch (_) {}
+  }
+  dialog.removeAttribute('open');
+}
+
 window.addEventListener('appinstalled', () => {
   deferredPrompt = null;
   if (installBtn) installBtn.hidden = true;
@@ -253,20 +275,26 @@ if (installBtn && installDialog) {
     if (isIos) {
       if (iosGuide) iosGuide.hidden = false;
       if (genericGuide) genericGuide.hidden = true;
-      installDialog.showModal();
+      openModal(installDialog);
     } else if (deferredPrompt) {
       deferredPrompt.prompt();
       deferredPrompt.userChoice.then(() => { deferredPrompt = null; });
     } else {
       if (iosGuide) iosGuide.hidden = true;
       if (genericGuide) genericGuide.hidden = false;
-      installDialog.showModal();
+      openModal(installDialog);
     }
   };
 }
 
 if (closeInstallBtn && installDialog) {
-  closeInstallBtn.onclick = () => installDialog.close();
+  closeInstallBtn.onclick = () => closeModal(installDialog);
+}
+
+if (installDialog) {
+  installDialog.addEventListener('click', e => {
+    if (e.target === installDialog) closeModal(installDialog);
+  });
 }
 
 if (confirmInstallBtn) {
@@ -682,6 +710,21 @@ if (btnTheme) {
   };
 }
 
+// Suporte para alternar tema dentro do modal de definições
+document.querySelectorAll('input[name="app-theme"]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    const val = radio.value;
+    if (val === 'auto') {
+      try { localStorage.removeItem(THEME_KEY); } catch (_) {}
+      activeTheme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    } else {
+      activeTheme = val;
+      try { localStorage.setItem(THEME_KEY, activeTheme); } catch (_) {}
+    }
+    applyTheme(activeTheme);
+  });
+});
+
 if (window.matchMedia) {
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
     try {
@@ -710,12 +753,14 @@ function getActiveCoefficients() {
     const saved = localStorage.getItem(COEFFICIENTS_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
-      return {
-        'util-diurno': { ...DEFAULT_COEFFICIENTS['util-diurno'], ...(parsed['util-diurno'] || {}) },
-        'util-noturno': { ...DEFAULT_COEFFICIENTS['util-noturno'], ...(parsed['util-noturno'] || {}) },
-        'especial-diurno': { ...DEFAULT_COEFFICIENTS['especial-diurno'], ...(parsed['especial-diurno'] || {}) },
-        'especial-noturno': { ...DEFAULT_COEFFICIENTS['especial-noturno'], ...(parsed['especial-noturno'] || {}) },
-      };
+      if (parsed && typeof parsed === 'object') {
+        return {
+          'util-diurno': { ...DEFAULT_COEFFICIENTS['util-diurno'], ...(parsed['util-diurno'] || {}) },
+          'util-noturno': { ...DEFAULT_COEFFICIENTS['util-noturno'], ...(parsed['util-noturno'] || {}) },
+          'especial-diurno': { ...DEFAULT_COEFFICIENTS['especial-diurno'], ...(parsed['especial-diurno'] || {}) },
+          'especial-noturno': { ...DEFAULT_COEFFICIENTS['especial-noturno'], ...(parsed['especial-noturno'] || {}) },
+        };
+      }
     }
   } catch (_) {}
   return JSON.parse(JSON.stringify(DEFAULT_COEFFICIENTS));
@@ -728,34 +773,55 @@ function saveActiveCoefficients(coeffs) {
 }
 
 function populateSettingsModal() {
-  const c = getActiveCoefficients();
-  const setVal = (id, val) => {
-    const el = $(id);
-    if (el) el.value = (val / 100).toFixed(2);
-  };
-  setVal('coeff-util-diurno-normal', c['util-diurno'].normal);
-  setVal('coeff-util-diurno-first', c['util-diurno'].firstExtra);
-  setVal('coeff-util-diurno-next', c['util-diurno'].nextExtra);
+  try {
+    const c = getActiveCoefficients();
+    const setVal = (id, val) => {
+      const el = $(id);
+      if (el && typeof val === 'number') el.value = (val / 100).toFixed(2);
+    };
+    if (c) {
+      if (c['util-diurno']) {
+        setVal('coeff-util-diurno-normal', c['util-diurno'].normal);
+        setVal('coeff-util-diurno-first', c['util-diurno'].firstExtra);
+        setVal('coeff-util-diurno-next', c['util-diurno'].nextExtra);
+      }
+      if (c['util-noturno']) {
+        setVal('coeff-util-noturno-normal', c['util-noturno'].normal);
+        setVal('coeff-util-noturno-first', c['util-noturno'].firstExtra);
+        setVal('coeff-util-noturno-next', c['util-noturno'].nextExtra);
+      }
+      if (c['especial-diurno']) {
+        setVal('coeff-especial-diurno-normal', c['especial-diurno'].normal);
+        setVal('coeff-especial-diurno-first', c['especial-diurno'].firstExtra);
+        setVal('coeff-especial-diurno-next', c['especial-diurno'].nextExtra);
+      }
+      if (c['especial-noturno']) {
+        setVal('coeff-especial-noturno-normal', c['especial-noturno'].normal);
+        setVal('coeff-especial-noturno-first', c['especial-noturno'].firstExtra);
+        setVal('coeff-especial-noturno-next', c['especial-noturno'].nextExtra);
+      }
+    }
 
-  setVal('coeff-util-noturno-normal', c['util-noturno'].normal);
-  setVal('coeff-util-noturno-first', c['util-noturno'].firstExtra);
-  setVal('coeff-util-noturno-next', c['util-noturno'].nextExtra);
+    // Sincronizar escolha de tema nas definições
+    const themeRadios = document.querySelectorAll('input[name="app-theme"]');
+    let currentMode = 'auto';
+    try {
+      const saved = localStorage.getItem(THEME_KEY);
+      if (saved === 'dark' || saved === 'light') currentMode = saved;
+    } catch (_) {}
+    themeRadios.forEach(r => {
+      r.checked = r.value === currentMode;
+    });
 
-  setVal('coeff-especial-diurno-normal', c['especial-diurno'].normal);
-  setVal('coeff-especial-diurno-first', c['especial-diurno'].firstExtra);
-  setVal('coeff-especial-diurno-next', c['especial-diurno'].nextExtra);
-
-  setVal('coeff-especial-noturno-normal', c['especial-noturno'].normal);
-  setVal('coeff-especial-noturno-first', c['especial-noturno'].firstExtra);
-  setVal('coeff-especial-noturno-next', c['especial-noturno'].nextExtra);
-
-  if (window.TurnoCertoAuth) {
-    const conf = window.TurnoCertoAuth.getConfig();
-    if ($('supabase-url')) $('supabase-url').value = conf.url || '';
-    if ($('supabase-key')) $('supabase-key').value = conf.key || '';
-    updateCloudStatusBadge();
+    if (window.TurnoCertoAuth) {
+      const conf = window.TurnoCertoAuth.getConfig();
+      if ($('supabase-url')) $('supabase-url').value = conf.url || '';
+      if ($('supabase-key')) $('supabase-key').value = conf.key || '';
+      updateCloudStatusBadge();
+    }
+  } catch (err) {
+    console.warn('Erro ao preencher definições:', err);
   }
-
   const statusMsg = $('settings-status');
   if (statusMsg) statusMsg.hidden = true;
 }
@@ -815,20 +881,21 @@ const btnSaveSettings = $('btn-save-settings');
 const btnSaveSupabase = $('btn-save-supabase-config');
 
 if (btnSettings && dialogSettings) {
-  btnSettings.onclick = () => {
+  btnSettings.onclick = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
     populateSettingsModal();
-    dialogSettings.showModal();
+    openModal(dialogSettings);
   };
 }
 
 if (closeSettings && dialogSettings) {
-  closeSettings.onclick = () => dialogSettings.close();
+  closeSettings.onclick = () => closeModal(dialogSettings);
 }
 
 if (dialogSettings) {
-  dialogSettings.onclick = e => {
-    if (e.target === dialogSettings) dialogSettings.close();
-  };
+  dialogSettings.addEventListener('click', e => {
+    if (e.target === dialogSettings) closeModal(dialogSettings);
+  });
 }
 
 if (btnResetCoeffs) {
@@ -911,21 +978,22 @@ function updateAuthUI(user) {
 }
 
 if (btnAuth && dialogAuth) {
-  btnAuth.onclick = () => {
+  btnAuth.onclick = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
     if (authError) authError.hidden = true;
     if (authSuccess) authSuccess.hidden = true;
-    dialogAuth.showModal();
+    openModal(dialogAuth);
   };
 }
 
 if (closeAuth && dialogAuth) {
-  closeAuth.onclick = () => dialogAuth.close();
+  closeAuth.onclick = () => closeModal(dialogAuth);
 }
 
 if (dialogAuth) {
-  dialogAuth.onclick = e => {
-    if (e.target === dialogAuth) dialogAuth.close();
-  };
+  dialogAuth.addEventListener('click', e => {
+    if (e.target === dialogAuth) closeModal(dialogAuth);
+  });
 }
 
 if (authTabLogin && authTabSignup) {

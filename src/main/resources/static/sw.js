@@ -1,4 +1,4 @@
-const CACHE_NAME = 'turno-certo-v10';
+const CACHE_NAME = 'turno-certo-v12';
 const ASSETS = [
   '/',
   '/index.html',
@@ -14,7 +14,9 @@ const ASSETS = [
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(ASSETS);
+      return Promise.allSettled(
+        ASSETS.map(asset => cache.add(asset).catch(err => console.warn('Cache asset error:', asset, err)))
+      );
     }).then(() => self.skipWaiting())
   );
 });
@@ -41,6 +43,20 @@ self.addEventListener('fetch', event => {
           { headers: { 'Content-Type': 'application/json' }, status: 503 }
         );
       })
+    );
+    return;
+  }
+
+  // Páginas e navegação principal: rede primeiro com fallback para cache
+  if (event.request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
+    event.respondWith(
+      fetch(event.request).then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200) {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        }
+        return networkResponse;
+      }).catch(() => caches.match(event.request).then(cached => cached || caches.match('/index.html')))
     );
     return;
   }

@@ -184,8 +184,8 @@
 .topbar-btn:active{transform:translateY(1px) scale(.97)}
 
 /* Modais / Diálogos da Aplicação */
-.app-dialog{border:none;border-radius:18px;padding:0;background:transparent;max-width:680px;width:92%;box-shadow:0 12px 48px rgba(0,0,0,0.28)}
-.app-dialog::backdrop{background:rgba(15,35,45,0.65);backdrop-filter:blur(4px)}
+.app-dialog{border:none;border-radius:18px;padding:0;background:transparent;max-width:680px;width:92%;box-shadow:0 12px 48px rgba(0,0,0,0.28);margin:auto}
+.app-dialog::backdrop{background:rgba(15,35,45,0.65);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .dialog-card{background:white;padding:26px 28px;border-radius:18px;color:#172c35;max-height:85vh;overflow-y:auto}
 .dialog-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:14px}
 .dialog-header h3{margin:0 0 4px;font-size:20px;color:var(--green)}
@@ -233,11 +233,21 @@
 .logged-in-actions{display:flex;gap:10px}
 .logged-in-actions .primary{margin-top:0}
 
+@media(max-width:740px){
+  .topbar{height:66px;padding:0 16px}
+  .brand{font-size:20px;flex-shrink:0}
+  .topbar-right{gap:8px;flex-shrink:0}
+  .topbar-right .version{display:none}
+  .theme-toggle-btn{display:none}
+  .topbar-btn{padding:7px 12px;font-size:13px;white-space:nowrap;min-height:38px}
+}
 @media(max-width:680px){
   .multipliers-grid{grid-template-columns:1fr}
   .dialog-card{padding:20px}
-  .topbar-right{gap:8px}
-  .topbar-btn{padding:6px 10px;font-size:12px}
+}
+@media(max-width:390px){
+  .topbar-badge-optional{display:none}
+  .topbar-btn{padding:6px 9px;font-size:12px}
 }
 
 /* Regras de Modo Escuro para Modais */

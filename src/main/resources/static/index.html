@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Turno Certo">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css?v=0.6.2">
   <script>
     (function(){
       try {
@@ -25,8 +25,8 @@
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/supabaseClient.js" defer></script>
-  <script src="/app.js" defer></script>
+  <script src="/supabaseClient.js?v=0.6.2" defer></script>
+  <script src="/app.js?v=0.6.2" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -243,6 +243,19 @@
       </div>
 
       <div class="settings-content">
+        <!-- Secção 0: Aparência e Modo Noturno -->
+        <section class="settings-section theme-settings-section" style="margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--border);">
+          <div class="section-badge-header">
+            <h4>🎨 Modo Noturno &amp; Aparência</h4>
+          </div>
+          <p class="section-desc">Escolhe o teu tema preferido para trabalhar de dia ou durante os turnos da noite.</p>
+          <div class="segmented theme-segmented" id="theme-segmented">
+            <label><input type="radio" name="app-theme" value="light"><span>☀️ Claro</span></label>
+            <label><input type="radio" name="app-theme" value="dark"><span>🌙 Noturno</span></label>
+            <label><input type="radio" name="app-theme" value="auto"><span>⚙️ Sistema</span></label>
+          </div>
+        </section>
+
         <!-- Secção 1: Multiplicadores por Categoria -->
         <section class="settings-section">
           <div class="section-badge-header">
