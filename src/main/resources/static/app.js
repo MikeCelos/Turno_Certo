@@ -668,10 +668,8 @@ if (rosterShifts.length > 0) {
   calculateRoster();
 }
 
-// --- Gestão de Tema (Modo Escuro / Claro) ---
+// --- Gestão de Tema (Modo Escuro / Claro gerido nas Definições) ---
 const THEME_KEY = 'tc_theme';
-const btnTheme = $('btn-theme');
-const themeIcon = $('theme-icon');
 const metaThemeColor = $('meta-theme-color');
 
 function getActiveTheme() {
@@ -689,26 +687,11 @@ function applyTheme(theme) {
   } else {
     document.documentElement.removeAttribute('data-theme');
   }
-  if (themeIcon) themeIcon.textContent = isDark ? '☀️' : '🌙';
-  if (btnTheme) {
-    btnTheme.setAttribute('title', isDark ? 'Ativar modo claro' : 'Ativar modo escuro');
-    btnTheme.setAttribute('aria-label', isDark ? 'Ativar modo claro' : 'Ativar modo escuro');
-  }
   if (metaThemeColor) metaThemeColor.content = isDark ? '#0c1418' : '#096653';
 }
 
 let activeTheme = getActiveTheme();
 applyTheme(activeTheme);
-
-if (btnTheme) {
-  btnTheme.onclick = () => {
-    activeTheme = activeTheme === 'dark' ? 'light' : 'dark';
-    try {
-      localStorage.setItem(THEME_KEY, activeTheme);
-    } catch (_) {}
-    applyTheme(activeTheme);
-  };
-}
 
 // Suporte para alternar tema dentro do modal de definições
 document.querySelectorAll('input[name="app-theme"]').forEach(radio => {

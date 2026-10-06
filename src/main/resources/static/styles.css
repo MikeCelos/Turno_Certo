@@ -105,10 +105,9 @@
   .footer-bottom{flex-direction:column;align-items:flex-start;gap:6px}
 }
 
-/* Botão de Alternar Modo Escuro */
-.theme-toggle-btn{background:linear-gradient(180deg,#ffffff 0%,#f6f8fa 100%);border:1px solid #d4dfe4;border-radius:50%;width:38px;height:38px;display:inline-grid;place-items:center;font-size:16px;cursor:pointer;transition:all .2s cubic-bezier(.16,1,.3,1);color:#172c35;box-shadow:0 1px 3px rgba(0,0,0,.05),inset 0 1px 0 #ffffff;padding:0}
-.theme-toggle-btn:hover{border-color:var(--green);color:var(--green);transform:scale(1.08) rotate(10deg);box-shadow:0 4px 12px rgba(0,0,0,.09)}
-.theme-toggle-btn:active{transform:scale(.95)}
+/* Seletor de Modo Noturno nas Definições */
+.theme-segmented{max-width:380px;margin-top:8px}
+.theme-segmented span{font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px}
 
 /* Variáveis e Regras do Modo Escuro */
 [data-theme="dark"]{
@@ -176,7 +175,6 @@
 [data-theme="dark"] .install-subtext{background:var(--bg-surface);color:var(--color-muted)}
 [data-theme="dark"] .rules summary{color:var(--green)}
 [data-theme="dark"] .rounding{border-top-color:var(--table-border);color:var(--color-muted)}
-[data-theme="dark"] .theme-toggle-btn{background:#1c2e39;border-color:#2b4250;color:#dce7ec}[data-theme="dark"] .theme-toggle-btn:hover{background:#233b49;border-color:var(--green);color:var(--green)}
 
 /* Botões da Barra de Topo */
 .topbar-btn{display:inline-flex;align-items:center;gap:7px;background:linear-gradient(180deg,#ffffff 0%,#f6f8fa 100%);border:1px solid #d4dfe4;border-radius:999px;padding:7px 15px;font-size:13px;font-weight:600;color:#19313d;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.04),inset 0 1px 0 #ffffff;transition:all .18s cubic-bezier(.16,1,.3,1)}
@@ -238,7 +236,6 @@
   .brand{font-size:20px;flex-shrink:0}
   .topbar-right{gap:8px;flex-shrink:0}
   .topbar-right .version{display:none}
-  .theme-toggle-btn{display:none}
   .topbar-btn{padding:7px 12px;font-size:13px;white-space:nowrap;min-height:38px}
 }
 @media(max-width:680px){

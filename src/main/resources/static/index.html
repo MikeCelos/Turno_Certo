@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Turno Certo">
   <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="/styles.css?v=0.6.2">
+  <link rel="stylesheet" href="/styles.css?v=0.6.3">
   <script>
     (function(){
       try {
@@ -25,8 +25,8 @@
     })();
   </script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/supabaseClient.js?v=0.6.2" defer></script>
-  <script src="/app.js?v=0.6.2" defer></script>
+  <script src="/supabaseClient.js?v=0.6.3" defer></script>
+  <script src="/app.js?v=0.6.3" defer></script>
 </head>
 <body>
   <header class="topbar">
@@ -34,7 +34,6 @@
     <div class="topbar-right">
       <button type="button" id="btn-settings" class="topbar-btn" aria-label="Definições e Multiplicadores" title="Definições e Multiplicadores"><span aria-hidden="true">⚙️</span> Definições</button>
       <button type="button" id="btn-auth" class="topbar-btn auth-nav-btn" aria-label="Conta e Sincronização (Opcional)" title="Conta e Sincronização (Opcional)"><span aria-hidden="true">👤</span> <span id="auth-btn-label">Entrar</span> <small class="topbar-badge-optional">opcional</small></button>
-      <button type="button" id="btn-theme" class="theme-toggle-btn" aria-label="Alternar modo escuro" title="Alternar modo escuro"><span id="theme-icon" aria-hidden="true">🌙</span></button>
       <button type="button" id="btn-install" class="install-btn" hidden><span class="install-icon" aria-hidden="true">📲</span> Instalar App</button>
       <span class="version">Calculadora <span>·</span> v0.6</span>
     </div>
@@ -250,9 +249,9 @@
           </div>
           <p class="section-desc">Escolhe o teu tema preferido para trabalhar de dia ou durante os turnos da noite.</p>
           <div class="segmented theme-segmented" id="theme-segmented">
-            <label><input type="radio" name="app-theme" value="light"><span>Claro</span></label>
-            <label><input type="radio" name="app-theme" value="dark"><span>Noturno</span></label>
-            <label><input type="radio" name="app-theme" value="auto"><span>Sistema</span></label>
+            <label><input type="radio" name="app-theme" value="light"><span>☀️ Claro</span></label>
+            <label><input type="radio" name="app-theme" value="dark"><span>🌙 Noturno</span></label>
+            <label><input type="radio" name="app-theme" value="auto"><span>⚙️ Sistema</span></label>
           </div>
         </section>
 
