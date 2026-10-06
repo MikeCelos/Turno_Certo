@@ -2,8 +2,8 @@
 
 // DICA: Podes colar o URL e Chave do teu projeto Supabase aqui diretamente,
 // ou introduzi-los no painel de Definições ⚙️ da aplicação.
-const DEFAULT_SUPABASE_URL = '';
-const DEFAULT_SUPABASE_ANON_KEY = '';
+const DEFAULT_SUPABASE_URL = 'https://xkzgzpffdzvubhdplvjo.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'sb_publishable_yRek61qxhB9dGU7FCVcarw_G0-EQ6Qi';
 
 const SUPABASE_STORAGE_URL_KEY = 'tc_supabase_url';
 const SUPABASE_STORAGE_KEY_KEY = 'tc_supabase_key';
