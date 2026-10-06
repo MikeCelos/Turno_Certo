@@ -8,6 +8,65 @@ const category = { 'util-diurno': 'Útil diurno', 'util-noturno': 'Útil noturno
 const time = value => new Intl.DateTimeFormat('pt-PT', { timeZone: 'Europe/Lisbon', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
 const date = value => new Intl.DateTimeFormat('pt-PT', { timeZone: 'Europe/Lisbon', day: '2-digit', month: 'short' }).format(new Date(value));
 const month = value => new Intl.DateTimeFormat('pt-PT', { timeZone: 'UTC', month: 'long', year: 'numeric' }).format(new Date(`${value}-01T12:00Z`));
+
+// Multiplicadores e Coeficientes Padrão
+const COEFFICIENTS_KEY = 'tc_custom_coefficients';
+const DEFAULT_COEFFICIENTS = {
+  'util-diurno': { normal: 100, firstExtra: 125, nextExtra: 150 },
+  'util-noturno': { normal: 150, firstExtra: 175, nextExtra: 200 },
+  'especial-diurno': { normal: 150, firstExtra: 175, nextExtra: 200 },
+  'especial-noturno': { normal: 200, firstExtra: 225, nextExtra: 250 },
+};
+
+function getActiveCoefficients() {
+  try {
+    const saved = localStorage.getItem(COEFFICIENTS_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      if (parsed && typeof parsed === 'object') {
+        return {
+          'util-diurno': { ...DEFAULT_COEFFICIENTS['util-diurno'], ...(parsed['util-diurno'] || {}) },
+          'util-noturno': { ...DEFAULT_COEFFICIENTS['util-noturno'], ...(parsed['util-noturno'] || {}) },
+          'especial-diurno': { ...DEFAULT_COEFFICIENTS['especial-diurno'], ...(parsed['especial-diurno'] || {}) },
+          'especial-noturno': { ...DEFAULT_COEFFICIENTS['especial-noturno'], ...(parsed['especial-noturno'] || {}) },
+        };
+      }
+    }
+  } catch (_) {}
+  return JSON.parse(JSON.stringify(DEFAULT_COEFFICIENTS));
+}
+
+function saveActiveCoefficients(coeffs) {
+  try {
+    localStorage.setItem(COEFFICIENTS_KEY, JSON.stringify(coeffs));
+  } catch (_) {}
+}
+
+// Gestão de Tema
+const THEME_KEY = 'tc_theme';
+const metaThemeColor = $('meta-theme-color');
+
+function getActiveTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === 'dark' || saved === 'light') return saved;
+  } catch (_) {}
+  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme(theme) {
+  const isDark = theme === 'dark';
+  if (isDark) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  if (metaThemeColor) metaThemeColor.content = isDark ? '#0c1418' : '#096653';
+}
+
+let activeTheme = getActiveTheme();
+applyTheme(activeTheme);
+
 let revision = 0;
 function dirty() {
   revision++;
@@ -668,30 +727,7 @@ if (rosterShifts.length > 0) {
   calculateRoster();
 }
 
-// --- Gestão de Tema (Modo Escuro / Claro gerido nas Definições) ---
-const THEME_KEY = 'tc_theme';
-const metaThemeColor = $('meta-theme-color');
 
-function getActiveTheme() {
-  try {
-    const saved = localStorage.getItem(THEME_KEY);
-    if (saved === 'dark' || saved === 'light') return saved;
-  } catch (_) {}
-  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
-function applyTheme(theme) {
-  const isDark = theme === 'dark';
-  if (isDark) {
-    document.documentElement.setAttribute('data-theme', 'dark');
-  } else {
-    document.documentElement.removeAttribute('data-theme');
-  }
-  if (metaThemeColor) metaThemeColor.content = isDark ? '#0c1418' : '#096653';
-}
-
-let activeTheme = getActiveTheme();
-applyTheme(activeTheme);
 
 // Suporte para alternar tema dentro do modal de definições
 document.querySelectorAll('input[name="app-theme"]').forEach(radio => {
@@ -723,37 +759,7 @@ if (window.matchMedia) {
 // --- Gestão de Configurações, Multiplicadores & Supabase ---
 // ==========================================================
 
-const DEFAULT_COEFFICIENTS = {
-  'util-diurno': { normal: 100, firstExtra: 125, nextExtra: 150 },
-  'util-noturno': { normal: 150, firstExtra: 175, nextExtra: 200 },
-  'especial-diurno': { normal: 150, firstExtra: 175, nextExtra: 200 },
-  'especial-noturno': { normal: 200, firstExtra: 225, nextExtra: 250 },
-};
-const COEFFICIENTS_KEY = 'tc_custom_coefficients';
 
-function getActiveCoefficients() {
-  try {
-    const saved = localStorage.getItem(COEFFICIENTS_KEY);
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (parsed && typeof parsed === 'object') {
-        return {
-          'util-diurno': { ...DEFAULT_COEFFICIENTS['util-diurno'], ...(parsed['util-diurno'] || {}) },
-          'util-noturno': { ...DEFAULT_COEFFICIENTS['util-noturno'], ...(parsed['util-noturno'] || {}) },
-          'especial-diurno': { ...DEFAULT_COEFFICIENTS['especial-diurno'], ...(parsed['especial-diurno'] || {}) },
-          'especial-noturno': { ...DEFAULT_COEFFICIENTS['especial-noturno'], ...(parsed['especial-noturno'] || {}) },
-        };
-      }
-    }
-  } catch (_) {}
-  return JSON.parse(JSON.stringify(DEFAULT_COEFFICIENTS));
-}
-
-function saveActiveCoefficients(coeffs) {
-  try {
-    localStorage.setItem(COEFFICIENTS_KEY, JSON.stringify(coeffs));
-  } catch (_) {}
-}
 
 function populateSettingsModal() {
   try {
