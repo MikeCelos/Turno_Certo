@@ -1,5 +1,10 @@
 // Turno Certo · Cliente Supabase para Autenticação e Sincronização Cloud
 
+// DICA: Podes colar o URL e Chave do teu projeto Supabase aqui diretamente,
+// ou introduzi-los no painel de Definições ⚙️ da aplicação.
+const DEFAULT_SUPABASE_URL = '';
+const DEFAULT_SUPABASE_ANON_KEY = '';
+
 const SUPABASE_STORAGE_URL_KEY = 'tc_supabase_url';
 const SUPABASE_STORAGE_KEY_KEY = 'tc_supabase_key';
 
@@ -7,11 +12,11 @@ let supabaseClient = null;
 
 function getSupabaseConfig() {
   try {
-    const url = localStorage.getItem(SUPABASE_STORAGE_URL_KEY) || '';
-    const key = localStorage.getItem(SUPABASE_STORAGE_KEY_KEY) || '';
-    return { url, key };
+    const url = localStorage.getItem(SUPABASE_STORAGE_URL_KEY) || DEFAULT_SUPABASE_URL || '';
+    const key = localStorage.getItem(SUPABASE_STORAGE_KEY_KEY) || DEFAULT_SUPABASE_ANON_KEY || '';
+    return { url: url.trim(), key: key.trim() };
   } catch (_) {
-    return { url: '', key: '' };
+    return { url: DEFAULT_SUPABASE_URL || '', key: DEFAULT_SUPABASE_ANON_KEY || '' };
   }
 }
 

@@ -33,10 +33,10 @@
     <a href="/" class="brand"><span class="mark" aria-hidden="true">✓</span>Turno<span>Certo</span></a>
     <div class="topbar-right">
       <button type="button" id="btn-settings" class="topbar-btn" aria-label="Definições e Multiplicadores" title="Definições e Multiplicadores"><span aria-hidden="true">⚙️</span> Definições</button>
-      <button type="button" id="btn-auth" class="topbar-btn auth-nav-btn" aria-label="Conta e Sincronização" title="Conta e Sincronização"><span aria-hidden="true">👤</span> <span id="auth-btn-label">Entrar</span></button>
+      <button type="button" id="btn-auth" class="topbar-btn auth-nav-btn" aria-label="Conta e Sincronização (Opcional)" title="Conta e Sincronização (Opcional)"><span aria-hidden="true">👤</span> <span id="auth-btn-label">Entrar</span> <small class="topbar-badge-optional">opcional</small></button>
       <button type="button" id="btn-theme" class="theme-toggle-btn" aria-label="Alternar modo escuro" title="Alternar modo escuro"><span id="theme-icon" aria-hidden="true">🌙</span></button>
       <button type="button" id="btn-install" class="install-btn" hidden><span class="install-icon" aria-hidden="true">📲</span> Instalar App</button>
-      <span class="version">Calculadora <span>·</span> v0.5</span>
+      <span class="version">Calculadora <span>·</span> v0.6</span>
     </div>
   </header>
   <main>
@@ -225,7 +225,7 @@
           © 2026 Turno Certo · Criado por Francisco Vasconcelos &amp; Dr. Diogo Vasconcelos
         </div>
         <div>
-          Versão v0.5 · Lisboa, Portugal
+          Versão v0.6 · Lisboa, Portugal
         </div>
       </div>
     </footer>
@@ -355,10 +355,10 @@
         <!-- Secção 2: Nuvem e Supabase -->
         <section class="settings-section cloud-section">
           <div class="section-badge-header">
-            <h4>⚡ Sincronização na Nuvem (Supabase)</h4>
+            <h4>⚡ Sincronização na Nuvem (Supabase) · Opcional</h4>
             <span id="cloud-badge" class="badge-tag">Offline</span>
           </div>
-          <p class="section-desc">Permite sincronizar os teus turnos e configurações entre o teu telemóvel e o teu computador com o teu projeto Supabase.</p>
+          <p class="section-desc">Permite guardar as tuas configurações e folha na nuvem para usares em vários dispositivos. Totalmente opcional (a app guarda localmente no teu dispositivo).</p>
           <div class="cloud-config-box">
             <div class="cloud-field">
               <label for="supabase-url">Supabase Project URL</label>
@@ -369,6 +369,16 @@
               <input type="password" id="supabase-key" placeholder="sb_publishable_anon_key...">
             </div>
             <button type="button" id="btn-save-supabase-config" class="secondary">Guardar Ligação Supabase</button>
+            <details class="supabase-guide-details">
+              <summary>📖 Como criar e ligar o teu projeto Supabase gratuito (passo a passo)</summary>
+              <ol>
+                <li>Cria uma conta gratuita em <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">supabase.com</a>.</li>
+                <li>Cria um novo projeto (ex.: <em>Turno Certo</em>).</li>
+                <li>No menu <strong>Project Settings</strong> (ícone ⚙️) &rarr; <strong>API</strong>, copia o <strong>Project URL</strong> e a <strong>anon public key</strong>.</li>
+                <li>Cola o URL e a Chave aqui em cima e clica em Guardar.</li>
+                <li>Pronto! Podes criar conta ou iniciar sessão para guardar as tuas configurações na nuvem.</li>
+              </ol>
+            </details>
           </div>
         </section>
       </div>
@@ -381,9 +391,14 @@
       <div class="dialog-header">
         <div>
           <h3>👤 Conta &amp; Sincronização</h3>
-          <p class="dialog-subtitle">Inicia sessão para manteres os teus turnos guardados na nuvem.</p>
+          <p class="dialog-subtitle">Guarda as tuas configurações e folha mensal na nuvem.</p>
         </div>
         <button type="button" id="close-auth" class="close-btn" aria-label="Fechar">✕</button>
+      </div>
+
+      <div class="auth-optional-banner">
+        <span class="banner-icon" aria-hidden="true">💡</span>
+        <p><strong>O login é 100% opcional:</strong> podes calcular qualquer turno e folha mensal livremente sem login. A conta serve apenas para guardar e sincronizar as tuas configurações na nuvem entre o telemóvel e o PC.</p>
       </div>
 
       <!-- Estado Quando Desconectado -->
