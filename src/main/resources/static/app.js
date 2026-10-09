@@ -93,50 +93,116 @@ function saveActiveVmerConfig(cfg) {
   } catch (_) {}
 }
 
-// Perfis de Atividade e Modelos de Escala (Presets)
-const PROFILE_KEY = 'tc_active_profile';
-const DEFAULT_PRESETS = {
-  hospital: [
-    { id: 'h_night', name: 'Noite 12h (20:00–08:00)', start: '20:00', end: '08:00', nextDay: true, regime: 'extra' },
-    { id: 'h_day', name: 'Dia 12h (08:00–20:00)', start: '08:00', end: '20:00', nextDay: false, regime: 'extra' },
-    { id: 'h_mixed', name: '24h Misto (12h Normal + 12h Extra)', start: '08:00', end: '08:00', nextDay: true, regime: 'misto', extraStart: '20:00' },
-    { id: 'h_full', name: '24h Trabalho Suplementar', start: '08:00', end: '08:00', nextDay: true, regime: 'extra' },
-  ],
-  vmer: [
-    { id: 'v_manha', name: 'Manhã 7h (08:00–15:00)', start: '08:00', end: '15:00', nextDay: false, regime: 'vmer' },
-    { id: 'v_tarde', name: 'Tarde 7h (15:00–22:00)', start: '15:00', end: '22:00', nextDay: false, regime: 'vmer' },
-    { id: 'v_noite', name: 'Noite 10h (22:00–08:00)', start: '22:00', end: '08:00', nextDay: true, regime: 'vmer' },
-    { id: 'v_24h', name: '24h VMER (08:00–08:00)', start: '08:00', end: '08:00', nextDay: true, regime: 'vmer' },
-  ],
-  custom: [
-    { id: 'c_urg12', name: 'Urgência 12h (08:00–20:00)', start: '08:00', end: '20:00', nextDay: false, regime: 'extra' },
-    { id: 'c_noite12', name: 'Noite 12h (20:00–08:00)', start: '20:00', end: '08:00', nextDay: true, regime: 'extra' },
-  ]
-};
+// Perfis de Atividade e Modelos de Escala (Presets) Personalizáveis
+const PROFILES_STORAGE_KEY = 'tc_user_profiles';
+const ACTIVE_PROFILE_KEY = 'tc_active_profile_id';
 
-function getActiveProfile() {
-  try {
-    const saved = localStorage.getItem(PROFILE_KEY);
-    if (saved === 'hospital' || saved === 'vmer' || saved === 'custom') return saved;
-  } catch (_) {}
-  return 'hospital';
-}
+const DEFAULT_PROFILES = [
+  {
+    id: 'prof_anestesia',
+    name: 'Anestesia',
+    workType: 'Anestesiologia',
+    calculationMode: 'sns',
+    rates: {
+      baseRate: '14,52',
+      extraRate: '16,33'
+    },
+    presets: [
+      { id: 'p_a1', name: 'Noite 12h (20:00–08:00)', start: '20:00', end: '08:00', nextDay: true, regime: 'extra' },
+      { id: 'p_a2', name: 'Dia 12h (08:00–20:00)', start: '08:00', end: '20:00', nextDay: false, regime: 'extra' },
+      { id: 'p_a3', name: '24h Misto (12h Normal + 12h Extra)', start: '08:00', end: '08:00', nextDay: true, regime: 'misto', extraStart: '20:00' },
+      { id: 'p_a4', name: '24h Trabalho Suplementar', start: '08:00', end: '08:00', nextDay: true, regime: 'extra' }
+    ]
+  },
+  {
+    id: 'prof_se',
+    name: 'SE · Serviço de Urgência',
+    workType: 'Serviço de Urgência',
+    calculationMode: 'sns',
+    rates: {
+      baseRate: '14,52',
+      extraRate: '16,33'
+    },
+    presets: [
+      { id: 'p_se1', name: 'Noite 12h (20:00–08:00)', start: '20:00', end: '08:00', nextDay: true, regime: 'extra' },
+      { id: 'p_se2', name: 'Dia 12h (08:00–20:00)', start: '08:00', end: '20:00', nextDay: false, regime: 'extra' },
+      { id: 'p_se3', name: '24h Misto (12h Normal + 12h Extra)', start: '08:00', end: '08:00', nextDay: true, regime: 'misto', extraStart: '20:00' },
+      { id: 'p_se4', name: 'Tarde 8h (14:00–22:00)', start: '14:00', end: '22:00', nextDay: false, regime: 'extra' }
+    ]
+  },
+  {
+    id: 'prof_vmer',
+    name: 'VMER',
+    workType: 'VMER',
+    calculationMode: 'vmer',
+    rates: {
+      baseRate: '29,91',
+      extraRate: ''
+    },
+    presets: [
+      { id: 'p_v1', name: 'Manhã 7h (08:00–15:00)', start: '08:00', end: '15:00', nextDay: false, regime: 'vmer' },
+      { id: 'p_v2', name: 'Tarde 7h (15:00–22:00)', start: '15:00', end: '22:00', nextDay: false, regime: 'vmer' },
+      { id: 'p_v3', name: 'Noite 10h (22:00–08:00)', start: '22:00', end: '08:00', nextDay: true, regime: 'vmer' },
+      { id: 'p_v4', name: '24h VMER (08:00–08:00)', start: '08:00', end: '08:00', nextDay: true, regime: 'vmer' }
+    ]
+  }
+];
 
-function getPresetsForProfile(profileId) {
+function getUserProfiles() {
   try {
-    const saved = localStorage.getItem(`tc_presets_${profileId}`);
+    const saved = localStorage.getItem(PROFILES_STORAGE_KEY);
     if (saved) {
       const parsed = JSON.parse(saved);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
   } catch (_) {}
-  return JSON.parse(JSON.stringify(DEFAULT_PRESETS[profileId] || DEFAULT_PRESETS.hospital));
+
+  const profiles = JSON.parse(JSON.stringify(DEFAULT_PROFILES));
+  try {
+    const hospPresets = localStorage.getItem('tc_presets_hospital');
+    if (hospPresets) {
+      const parsed = JSON.parse(hospPresets);
+      if (Array.isArray(parsed) && parsed.length > 0) profiles[0].presets = parsed;
+    }
+    const vmerPresets = localStorage.getItem('tc_presets_vmer');
+    if (vmerPresets) {
+      const parsed = JSON.parse(vmerPresets);
+      if (Array.isArray(parsed) && parsed.length > 0) profiles[2].presets = parsed;
+    }
+    const customPresets = localStorage.getItem('tc_presets_custom');
+    if (customPresets) {
+      const parsed = JSON.parse(customPresets);
+      if (Array.isArray(parsed) && parsed.length > 0) profiles[1].presets = parsed;
+    }
+  } catch (_) {}
+  saveUserProfiles(profiles);
+  return profiles;
 }
 
-function savePresetsForProfile(profileId, presets) {
+function saveUserProfiles(profiles) {
   try {
-    localStorage.setItem(`tc_presets_${profileId}`, JSON.stringify(presets));
+    localStorage.setItem(PROFILES_STORAGE_KEY, JSON.stringify(profiles));
   } catch (_) {}
+}
+
+function getActiveProfileId() {
+  try {
+    const saved = localStorage.getItem(ACTIVE_PROFILE_KEY);
+    if (saved) return saved;
+    const old = localStorage.getItem('tc_active_profile');
+    if (old === 'vmer') return 'prof_vmer';
+    if (old === 'custom') return 'prof_se';
+  } catch (_) {}
+  return 'prof_anestesia';
+}
+
+function getActiveProfile() {
+  const profiles = getUserProfiles();
+  const activeId = getActiveProfileId();
+  const found = profiles.find(p => p.id === activeId);
+  if (found) return found;
+  if (profiles.length > 0) return profiles[0];
+  return DEFAULT_PROFILES[0];
 }
 
 // Gestão de Tema
@@ -280,9 +346,9 @@ async function calculate(isExample = false) {
     const input = Object.fromEntries(new FormData(form));
     input.holidays = [...holidays];
     input.customCoefficients = getActiveCoefficients();
-    input.profileType = activeProfile;
+    input.profileType = activeProfile.calculationMode || activeProfile.id;
 
-    if (activeProfile === 'vmer') {
+    if (activeProfile.calculationMode === 'vmer') {
       input.vmerConfig = getActiveVmerConfig();
       input.regime = 'vmer';
     } else if (input.regime === 'misto') {
@@ -332,9 +398,12 @@ function updateMixedVisibility() {
   }
 
   if (rateLabel && rateDesc) {
-    if (activeProfile === 'vmer') {
+    if (activeProfile.calculationMode === 'vmer') {
       rateLabel.textContent = 'Hora Base VMER (R)';
       rateDesc.textContent = 'Hora base contratual VMER (referência para os multiplicadores da tabela).';
+    } else if (activeProfile.calculationMode === 'linear') {
+      rateLabel.textContent = 'Valor-hora Contratado (€/h)';
+      rateDesc.textContent = 'Remuneração horária fixa para apuramento direto do turno.';
     } else if (isMixed) {
       rateLabel.textContent = 'Valor-hora normal / base contratual (R)';
       rateDesc.textContent = 'Vencimento base do médico (utilizado para apuramento do período normal).';
@@ -372,8 +441,8 @@ function getNextDate(dateStr) {
 function renderPresets() {
   const container = $('preset-buttons');
   if (!container) return;
-  const profileId = getActiveProfile();
-  const presets = getPresetsForProfile(profileId);
+  const profile = getActiveProfile();
+  const presets = (profile && profile.presets) || [];
   container.replaceChildren();
 
   presets.forEach((p, idx) => {
@@ -393,18 +462,44 @@ function renderPresets() {
       const delBtn = document.createElement('button');
       delBtn.type = 'button';
       delBtn.className = 'preset-pill-del';
+      delBtn.setAttribute('aria-label', `Eliminar modelo ${p.name}`);
+      delBtn.title = 'Eliminar modelo habitual';
       delBtn.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
       delBtn.onclick = (e) => {
         e.stopPropagation();
-        const updated = presets.filter((_, i) => i !== idx);
-        savePresetsForProfile(profileId, updated);
-        renderPresets();
+        deletePreset(idx);
       };
       wrap.appendChild(delBtn);
     }
 
     container.appendChild(wrap);
   });
+let syncTimeout = null;
+function triggerCloudSync() {
+  if (!window.TurnoCertoAuth || !window.TurnoCertoAuth.isConfigured()) return;
+  if (syncTimeout) clearTimeout(syncTimeout);
+  syncTimeout = setTimeout(async () => {
+    try {
+      await window.TurnoCertoAuth.syncUpload({
+        customCoefficients: getActiveCoefficients(),
+        roster: typeof rosterShifts !== 'undefined' ? rosterShifts : [],
+        profiles: getUserProfiles(),
+        activeProfileId: getActiveProfileId()
+      });
+    } catch (_) {}
+  }, 1000);
+}
+
+function deletePreset(index) {
+  const profiles = getUserProfiles();
+  const activeId = getActiveProfileId();
+  const profile = profiles.find(p => p.id === activeId);
+  if (profile && Array.isArray(profile.presets)) {
+    profile.presets = profile.presets.filter((_, i) => i !== index);
+    saveUserProfiles(profiles);
+    renderPresets();
+    triggerCloudSync();
+  }
 }
 
 function applyPreset(p) {
@@ -414,8 +509,11 @@ function applyPreset(p) {
   $('start').value = `${anchor}T${p.start}`;
   $('end').value = p.nextDay ? `${next}T${p.end}` : `${anchor}T${p.end}`;
 
+  const active = getActiveProfile();
+  const isProfileVmer = active.calculationMode === 'vmer';
+
   if (p.regime) {
-    const isVmer = p.regime === 'vmer';
+    const isVmer = p.regime === 'vmer' || isProfileVmer;
     const radio = form.querySelector(`input[name="regime"][value="${isVmer ? 'extra' : p.regime}"]`);
     if (radio) radio.checked = true;
     if (p.regime === 'misto' && p.extraStart) {
@@ -425,6 +523,12 @@ function applyPreset(p) {
 
   if (p.rate) {
     $('rate').value = p.rate;
+  } else if (active.rates && active.rates.baseRate) {
+    $('rate').value = active.rates.baseRate;
+  }
+
+  if (p.regime === 'misto' && active.rates && active.rates.extraRate && $('extraRate')) {
+    $('extraRate').value = active.rates.extraRate;
   }
 
   updateMixedVisibility();
@@ -432,50 +536,209 @@ function applyPreset(p) {
   calculate();
 }
 
-function setProfile(profileId) {
-  try { localStorage.setItem(PROFILE_KEY, profileId); } catch (_) {}
-  document.querySelectorAll('.profile-chip').forEach(btn => {
-    btn.classList.toggle('active', btn.getAttribute('data-profile') === profileId);
+function renderProfileChips() {
+  const container = $('profile-chips-container');
+  if (!container) return;
+  const profiles = getUserProfiles();
+  const activeId = getActiveProfileId();
+  container.replaceChildren();
+
+  profiles.forEach(p => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `profile-chip ${p.id === activeId ? 'active' : ''}`;
+    btn.setAttribute('data-profile', p.id);
+    btn.setAttribute('role', 'radio');
+    btn.setAttribute('aria-checked', p.id === activeId ? 'true' : 'false');
+    btn.textContent = p.name;
+    btn.onclick = () => setActiveProfile(p.id);
+    container.appendChild(btn);
   });
+}
+
+function setActiveProfile(profileId) {
+  try { localStorage.setItem(ACTIVE_PROFILE_KEY, profileId); } catch (_) {}
+  const profile = getActiveProfile();
 
   const headingEyebrow = $('heading-eyebrow');
   const headingTitle = $('heading-title');
   const headingDesc = $('heading-desc');
   const workType = $('workType');
   const rateInput = $('rate');
-  const vmerCfg = getActiveVmerConfig();
+  const extraRateInput = $('extraRate');
 
-  if (profileId === 'vmer') {
+  if (profile.calculationMode === 'vmer') {
     if (headingEyebrow) headingEyebrow.textContent = 'EMERGÊNCIA MÉDICA PRÉ-HOSPITALAR · VMER';
-    if (headingTitle) headingTitle.textContent = 'Apuramento de Turnos e Escalas VMER';
+    if (headingTitle) headingTitle.textContent = `${profile.name} · Apuramento de Turnos`;
     if (headingDesc) headingDesc.textContent = 'Cálculo por blocos horários (08-15, 15-22, 22-08) com tabela de multiplicadores R.';
-    if (workType && (!workType.value || workType.value === 'Anestesiologia')) workType.value = 'VMER';
-    if (rateInput && (!rateInput.value || rateInput.value === '14,52' || rateInput.value === '20,00')) {
-      rateInput.value = vmerCfg.baseRate || '29,91';
-    }
-  } else if (profileId === 'custom') {
-    if (headingEyebrow) headingEyebrow.textContent = 'REGIME PERSONALIZADO · OUTROS SERVIÇOS';
-    if (headingTitle) headingTitle.textContent = 'Apuramento com Parâmetros Customizados';
-    if (headingDesc) headingDesc.textContent = 'Configure os modelos de escala habituais e taxas de remuneração pretendidas.';
+    const vmerCfg = getActiveVmerConfig();
+    if (rateInput) rateInput.value = (profile.rates && profile.rates.baseRate) || vmerCfg.baseRate || '29,91';
+    if (workType) workType.value = profile.workType || 'VMER';
+  } else if (profile.calculationMode === 'linear') {
+    if (headingEyebrow) headingEyebrow.textContent = 'REGIME LINEAR · HORAS × VALOR-HORA';
+    if (headingTitle) headingTitle.textContent = `${profile.name} · Apuramento Direto`;
+    if (headingDesc) headingDesc.textContent = 'Multiplicação direta de horas realizadas pela remuneração horária contratada.';
+    if (workType) workType.value = profile.workType || profile.name;
+    if (rateInput && profile.rates && profile.rates.baseRate) rateInput.value = profile.rates.baseRate;
   } else {
     if (headingEyebrow) headingEyebrow.textContent = 'ENQUADRAMENTO LEGAL E ACTS · CARREIRA MÉDICA';
-    if (headingTitle) headingTitle.textContent = 'Cálculo de Suplementos e Trabalho Suplementar';
+    if (headingTitle) headingTitle.textContent = `${profile.name} · Cálculo de Suplementos`;
     if (headingDesc) headingDesc.textContent = 'Apuramento discriminado de suplementos horários, períodos noturnos e regimes de trabalho.';
-    if (workType && workType.value === 'VMER') workType.value = 'Anestesiologia';
+    if (workType) workType.value = profile.workType || profile.name;
+    if (rateInput && profile.rates && profile.rates.baseRate) rateInput.value = profile.rates.baseRate;
+    if (extraRateInput && profile.rates && profile.rates.extraRate) extraRateInput.value = profile.rates.extraRate;
   }
 
+  renderProfileChips();
   updateMixedVisibility();
   renderPresets();
   dirty();
   calculate();
 }
 
-// Configuração dos botões de perfil
-document.querySelectorAll('.profile-chip').forEach(btn => {
-  btn.addEventListener('click', () => {
-    setProfile(btn.getAttribute('data-profile'));
+function setProfile(profileId) {
+  setActiveProfile(profileId);
+}
+
+// Modal de Gestão e Criação de Perfis
+const btnAddProfile = $('btn-add-profile');
+const btnEditProfile = $('btn-edit-profile');
+const profileDialog = $('profile-dialog');
+const closeProfileDialog = $('close-profile-dialog');
+const profileForm = $('profile-form');
+const btnDeleteProfile = $('btn-delete-profile');
+const profileCalcModeSelect = $('profile-calc-mode');
+const profileExtraRateBox = $('profile-extra-rate-box');
+
+if (profileCalcModeSelect && profileExtraRateBox) {
+  profileCalcModeSelect.addEventListener('change', () => {
+    const mode = profileCalcModeSelect.value;
+    profileExtraRateBox.hidden = mode === 'vmer' || mode === 'linear';
+    const baseLabel = $('profile-base-rate-label');
+    if (baseLabel) {
+      baseLabel.textContent = mode === 'vmer' ? 'Hora Base VMER (€/h)' : 'Valor-hora Base / Contratual';
+    }
   });
-});
+}
+
+if (btnAddProfile && profileDialog) {
+  btnAddProfile.onclick = () => {
+    if (profileForm) profileForm.reset();
+    $('profile-edit-id').value = '';
+    $('profile-dialog-title').textContent = 'Novo Perfil de Trabalho';
+    if (btnDeleteProfile) btnDeleteProfile.hidden = true;
+    if (profileExtraRateBox) profileExtraRateBox.hidden = false;
+    openModal(profileDialog);
+  };
+}
+
+if (btnEditProfile && profileDialog) {
+  btnEditProfile.onclick = () => {
+    const profile = getActiveProfile();
+    $('profile-edit-id').value = profile.id;
+    $('profile-dialog-title').textContent = `Editar Perfil: ${profile.name}`;
+    $('profile-name-input').value = profile.name;
+    $('profile-calc-mode').value = profile.calculationMode || 'sns';
+    $('profile-base-rate-input').value = (profile.rates && profile.rates.baseRate) || $('rate').value || '14,52';
+    $('profile-extra-rate-input').value = (profile.rates && profile.rates.extraRate) || ($('extraRate') ? $('extraRate').value : '') || '16,33';
+    $('profile-work-type-input').value = profile.workType || $('workType').value || '';
+    
+    const isSns = (profile.calculationMode || 'sns') === 'sns';
+    if (profileExtraRateBox) profileExtraRateBox.hidden = !isSns;
+
+    const profiles = getUserProfiles();
+    if (btnDeleteProfile) {
+      btnDeleteProfile.hidden = profiles.length <= 1;
+    }
+    openModal(profileDialog);
+  };
+}
+
+if (closeProfileDialog && profileDialog) {
+  closeProfileDialog.onclick = () => closeModal(profileDialog);
+}
+if (profileDialog) {
+  profileDialog.addEventListener('click', e => {
+    if (e.target === profileDialog) closeModal(profileDialog);
+  });
+}
+
+if (profileForm) {
+  profileForm.onsubmit = e => {
+    e.preventDefault();
+    const editId = $('profile-edit-id').value;
+    const profiles = getUserProfiles();
+    const name = $('profile-name-input').value.trim();
+    const calcMode = $('profile-calc-mode').value;
+    const baseRate = $('profile-base-rate-input').value.trim();
+    const extraRate = $('profile-extra-rate-input') ? $('profile-extra-rate-input').value.trim() : '';
+    const workType = $('profile-work-type-input').value.trim() || name;
+
+    if (editId) {
+      const p = profiles.find(item => item.id === editId);
+      if (p) {
+        p.name = name;
+        p.calculationMode = calcMode;
+        p.rates = { baseRate, extraRate };
+        p.workType = workType;
+      }
+      saveUserProfiles(profiles);
+      closeModal(profileDialog);
+      setActiveProfile(editId);
+    } else {
+      const newId = 'prof_' + Date.now();
+      let defaultPresets = [];
+      if (calcMode === 'vmer') {
+        defaultPresets = [
+          { id: 'p_' + Date.now() + '_1', name: 'Manhã 7h (08:00–15:00)', start: '08:00', end: '15:00', nextDay: false, regime: 'vmer' },
+          { id: 'p_' + Date.now() + '_2', name: 'Tarde 7h (15:00–22:00)', start: '15:00', end: '22:00', nextDay: false, regime: 'vmer' },
+          { id: 'p_' + Date.now() + '_3', name: 'Noite 10h (22:00–08:00)', start: '22:00', end: '08:00', nextDay: true, regime: 'vmer' },
+          { id: 'p_' + Date.now() + '_4', name: '24h VMER (08:00–08:00)', start: '08:00', end: '08:00', nextDay: true, regime: 'vmer' }
+        ];
+      } else {
+        defaultPresets = [
+          { id: 'p_' + Date.now() + '_1', name: 'Noite 12h (20:00–08:00)', start: '20:00', end: '08:00', nextDay: true, regime: 'extra' },
+          { id: 'p_' + Date.now() + '_2', name: 'Dia 12h (08:00–20:00)', start: '08:00', end: '20:00', nextDay: false, regime: 'extra' },
+          { id: 'p_' + Date.now() + '_3', name: '24h Misto (12h Normal + 12h Extra)', start: '08:00', end: '08:00', nextDay: true, regime: 'misto', extraStart: '20:00' }
+        ];
+      }
+
+      const newProfile = {
+        id: newId,
+        name,
+        workType,
+        calculationMode: calcMode,
+        rates: { baseRate, extraRate },
+        presets: defaultPresets
+      };
+      profiles.push(newProfile);
+      saveUserProfiles(profiles);
+      closeModal(profileDialog);
+      setActiveProfile(newId);
+    }
+    triggerCloudSync();
+  };
+}
+
+if (btnDeleteProfile) {
+  btnDeleteProfile.onclick = () => {
+    const editId = $('profile-edit-id').value;
+    if (!editId) return;
+    let profiles = getUserProfiles();
+    if (profiles.length <= 1) {
+      alert('Não é possível eliminar o único perfil existente.');
+      return;
+    }
+    const profileToDelete = profiles.find(p => p.id === editId);
+    if (confirm(`Tem a certeza de que pretende eliminar o perfil "${profileToDelete ? profileToDelete.name : ''}"?`)) {
+      profiles = profiles.filter(p => p.id !== editId);
+      saveUserProfiles(profiles);
+      closeModal(profileDialog);
+      setActiveProfile(profiles[0].id);
+      triggerCloudSync();
+    }
+  };
+}
 
 // Modal de Adicionar Modelo de Escala
 const btnAddPreset = $('btn-add-preset');
@@ -512,8 +775,12 @@ if (presetRegimeSelect && presetExtraStartBox) {
 if (presetForm) {
   presetForm.onsubmit = e => {
     e.preventDefault();
-    const profileId = getActiveProfile();
-    const presets = getPresetsForProfile(profileId);
+    const profiles = getUserProfiles();
+    const activeId = getActiveProfileId();
+    const profile = profiles.find(p => p.id === activeId);
+    if (!profile) return;
+    if (!Array.isArray(profile.presets)) profile.presets = [];
+
     const newPreset = {
       id: 'p_' + Date.now(),
       name: $('preset-name').value.trim(),
@@ -524,41 +791,59 @@ if (presetForm) {
       extraStart: $('preset-regime-select').value === 'misto' ? $('preset-extra-start-time').value : null,
       rate: $('preset-rate-input') && $('preset-rate-input').value.trim() ? $('preset-rate-input').value.trim() : null
     };
-    presets.push(newPreset);
-    savePresetsForProfile(profileId, presets);
+    profile.presets.push(newPreset);
+    saveUserProfiles(profiles);
     renderPresets();
     closeModal(presetDialog);
+    triggerCloudSync();
   };
 }
 
-let hasSaved = false;
-try {
-  const savedRate = localStorage.getItem(RATE_KEY);
-  if (savedRate) { $('rate').value = savedRate; hasSaved = true; }
-  const savedWorkType = localStorage.getItem(WORK_TYPE_KEY);
-  if (savedWorkType) { $('workType').value = savedWorkType; hasSaved = true; }
-  const savedRegime = localStorage.getItem(REGIME_KEY);
-  if (savedRegime) {
-    const radio = form.querySelector(`input[name="regime"][value="${savedRegime}"]`);
-    if (radio) { radio.checked = true; hasSaved = true; }
-  }
-} catch (_) {}
-
-const initProfile = getActiveProfile();
-document.querySelectorAll('.profile-chip').forEach(btn => {
-  btn.classList.toggle('active', btn.getAttribute('data-profile') === initProfile);
-});
-renderPresets();
-updateMixedVisibility();
+renderProfileChips();
+setActiveProfile(getActiveProfileId());
 
 $('rate').addEventListener('input', () => {
-  try { localStorage.setItem(RATE_KEY, $('rate').value); } catch (_) {}
+  const val = $('rate').value.trim();
+  try {
+    localStorage.setItem(RATE_KEY, val);
+    const profiles = getUserProfiles();
+    const active = profiles.find(p => p.id === getActiveProfileId());
+    if (active) {
+      if (!active.rates) active.rates = {};
+      active.rates.baseRate = val;
+      saveUserProfiles(profiles);
+      triggerCloudSync();
+    }
+  } catch (_) {}
 });
 if ($('extraRate')) {
-  $('extraRate').addEventListener('input', () => dirty());
+  $('extraRate').addEventListener('input', () => {
+    dirty();
+    const val = $('extraRate').value.trim();
+    try {
+      const profiles = getUserProfiles();
+      const active = profiles.find(p => p.id === getActiveProfileId());
+      if (active) {
+        if (!active.rates) active.rates = {};
+        active.rates.extraRate = val;
+        saveUserProfiles(profiles);
+        triggerCloudSync();
+      }
+    } catch (_) {}
+  });
 }
 $('workType').addEventListener('input', () => {
-  try { localStorage.setItem(WORK_TYPE_KEY, $('workType').value); } catch (_) {}
+  const val = $('workType').value.trim();
+  try {
+    localStorage.setItem(WORK_TYPE_KEY, val);
+    const profiles = getUserProfiles();
+    const active = profiles.find(p => p.id === getActiveProfileId());
+    if (active) {
+      active.workType = val;
+      saveUserProfiles(profiles);
+      triggerCloudSync();
+    }
+  } catch (_) {}
 });
 form.querySelectorAll('input[name="regime"]').forEach(radio => {
   radio.addEventListener('change', () => {
@@ -730,12 +1015,7 @@ function saveRoster() {
     localStorage.setItem(ROSTER_KEY, JSON.stringify(rosterShifts));
   } catch (_) {}
   updateRosterBadge();
-  if (window.TurnoCertoAuth && window.TurnoCertoAuth.isConfigured()) {
-    window.TurnoCertoAuth.syncUpload({
-      customCoefficients: getActiveCoefficients(),
-      roster: rosterShifts
-    }).catch(() => {});
-  }
+  triggerCloudSync();
 }
 
 function updateRosterBadge() {
@@ -1001,14 +1281,14 @@ if ($('load-roster-example')) {
 if ($('add-to-roster')) {
   $('add-to-roster').onclick = () => {
     if (!form.reportValidity()) return;
-    const activeProfile = getActiveProfile();
-    const isVmer = activeProfile === 'vmer';
+    const active = getActiveProfile();
+    const isVmer = active.calculationMode === 'vmer';
     const isMixed = !isVmer && form.elements['regime'] && form.elements['regime'].value === 'misto';
     const shiftItem = {
       id: 's_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
-      workType: $('workType').value.trim() || (isVmer ? 'VMER' : 'Anestesiologia'),
+      workType: $('workType').value.trim() || active.workType || (isVmer ? 'VMER' : 'Serviço Clínico'),
       regime: isVmer ? 'vmer' : form.elements['regime'].value,
-      profileType: activeProfile,
+      profileType: active.calculationMode || active.id,
       start: $('start').value,
       end: $('end').value,
       rate: $('rate').value,
@@ -1525,6 +1805,14 @@ if (authForm) {
         try {
           const cloudData = await window.TurnoCertoAuth.syncDownload();
           if (cloudData) {
+            if (cloudData.profiles && Array.isArray(cloudData.profiles) && cloudData.profiles.length > 0) {
+              saveUserProfiles(cloudData.profiles);
+              if (cloudData.activeProfileId) {
+                try { localStorage.setItem(ACTIVE_PROFILE_KEY, cloudData.activeProfileId); } catch (_) {}
+              }
+              renderProfileChips();
+              setActiveProfile(getActiveProfileId());
+            }
             if (cloudData.customCoefficients) {
               saveActiveCoefficients(cloudData.customCoefficients);
             }
@@ -1660,10 +1948,12 @@ if (btnSyncNow) {
       if (window.TurnoCertoAuth) {
         const ok = await window.TurnoCertoAuth.syncUpload({
           customCoefficients: getActiveCoefficients(),
-          roster: rosterShifts
+          roster: rosterShifts,
+          profiles: getUserProfiles(),
+          activeProfileId: getActiveProfileId()
         });
         if (syncMsg) {
-          syncMsg.textContent = ok ? 'Escala e parâmetros sincronizados com sucesso.' : 'Nota: Tabela cloud não configurada. Definições salvas localmente.';
+          syncMsg.textContent = ok ? 'Escala, perfis e parâmetros sincronizados com sucesso.' : 'Nota: Tabela cloud não configurada. Definições salvas localmente.';
           syncMsg.hidden = false;
         }
       }
@@ -1686,6 +1976,14 @@ if (window.TurnoCertoAuth) {
       try {
         const cloudData = await window.TurnoCertoAuth.syncDownload();
         if (cloudData) {
+          if (cloudData.profiles && Array.isArray(cloudData.profiles) && cloudData.profiles.length > 0) {
+            saveUserProfiles(cloudData.profiles);
+            if (cloudData.activeProfileId) {
+              try { localStorage.setItem(ACTIVE_PROFILE_KEY, cloudData.activeProfileId); } catch (_) {}
+            }
+            renderProfileChips();
+            setActiveProfile(getActiveProfileId());
+          }
           if (cloudData.customCoefficients) saveActiveCoefficients(cloudData.customCoefficients);
           if (Array.isArray(cloudData.roster) && cloudData.roster.length > 0 && rosterShifts.length === 0) {
             rosterShifts = cloudData.roster;
